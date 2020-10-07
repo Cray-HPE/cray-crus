@@ -1,0 +1,9 @@
+#! /bin/bash
+SWAGGER=api/swagger.yaml
+# NOTE: git diff exits with non-zero (false) if there ARE differences,
+# hence the odd logic...
+if ! git diff -s --exit-code $SWAGGER; then
+    git add ${SWAGGER}
+    git commit --amend -C HEAD --no-verify
+fi
+exit 0

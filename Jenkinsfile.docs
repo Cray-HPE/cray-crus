@@ -1,0 +1,11 @@
+// Jenkinsfile for API DOC
+// Copyright 2019 Cray Inc. All rights reserved.
+
+@Library('dst-shared@release/shasta-1.3') _
+
+documentBuildPipeline {
+	yamlFile = "api/swagger.yaml"
+	jenkinsfile = "Jenkinsfile.docs"
+	serviceName = "crus"
+	documentLocation = ""
+}
