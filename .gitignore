@@ -1,0 +1,10 @@
+crus_env
+*.pyc
+__pycache__
+.coverage
+*,cover
+venv
+.venv
+.nox
+*.egg-info
+*~
