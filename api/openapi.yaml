@@ -1,0 +1,301 @@
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Cray Compute Rolling Upgrade Service (CRUS) API Specification
+# This file is currently kept up-to-date manually. This will change in
+# the future.
+
+openapi: "3.0.2"
+
+info:
+  title: "Compute Rolling Upgrade Service"
+  version: "1.4.0"
+  description: |
+    The Compute Rolling Upgrade Service (CRUS) coordinates with workload managers
+    and the Boot Orchestration Service (BOS) to modify the boot image and/or
+    configuration on a set of compute nodes in a way that is minimally disruptive
+    to the overall ability of the computes to run jobs.
+    
+    CRUS divides the set of nodes into groups and, for each group in turn, it performs
+    the following procedure:
+    1. Quiesces the nodes using the workload manager.
+    2. Takes the nodes out of service in the workload manager.
+    3. Creates a BOS reboot operation on the nodes using the specified BOS session template.
+    4. Puts the nodes back into service using the workload manager.
+
+    Each group of nodes must complete this procedure before the next group begins it. In
+    this way most of the total set of nodes remains available to do work while each smaller
+    group is being updated.
+
+    ## Resources
+
+
+    ### /session
+
+    A CRUS session performs a rolling upgrade on a set of compute nodes.
+
+    ## Workflow
+
+
+    ### Create a New Session
+
+    #### POST /session
+
+    A new session is launched as a result of this call.
+    
+    Specify the following parameters:
+    * failed_label: An empty Hardware State Manager (HSM) group which CRUS will populate
+    with any nodes that fail their upgrades.
+    * starting_label: An HSM group which contains the total set of nodes to be upgraded.
+    * upgrade_step_size: The number of nodes to include in each discrete upgrade step.
+    The upgrade steps will never exceed this quantity, although in some cases they
+    may be smaller.
+    * upgrade_template_id: The name of the BOS session template to use for the upgrades.
+    * workload_manager_type: Currently only slurm is supported.
+    * upgrading_label: An empty HSM group which CRUS will use to boot and configure
+    the discrete sets of nodes.
+
+    ### Examine a Session
+
+    #### GET /session/{upgrade_id}
+
+    Retrieve session details and status by upgrade id.
+
+    ### List All Sessions
+
+    #### GET /session
+
+    List all in progress and completed sessions.
+
+    ### Request a Session Be Deleted
+
+    #### DELETE /session/{upgrade_id}
+
+    Request a deletion of the specified CRUS session. Note that the delete may not happen
+    immediately.
+
+    ## Interactions with Other APIs
+
+    CRUS works in concert with BOS to perform the node upgrades. The session template
+    specified as the upgrade template must be available in BOS.
+    CRUS uses HSM to view the starting node group and modify the upgrading and (if
+    necessary) failed node groups.
+
+servers:
+- url: https://api-gw-service-nmn.local/apis/crus
+  description: The production CRUS API server through a standard API gateway
+- url: https://cray-crus/
+  description: The service as exposed through k8s DNS service mapping
+components:
+  schemas:
+    Session:
+      description: A CRUS Session object.
+      type: object
+      properties:
+        failed_label:
+          type: string
+          minLength: 1
+          example: nodes-that-failed
+          description: |
+            An empty Hardware State Manager (HSM) group which CRUS will populate
+            with any nodes that fail their upgrades.
+        starting_label:
+          type: string
+          minLength: 1
+          example: nodes-to-upgrade
+          description: |
+            A Hardware State Manager (HSM) group which contains the total set of
+            nodes to be upgraded.
+        upgrade_step_size:
+          type: integer
+          minimum: 1
+          example: 30
+          description: |
+            The desired number of nodes for each discrete upgrade step. This quantity
+            will not be exceeded but some steps may use fewer nodes.
+        upgrade_template_id:
+          type: string
+          minLength: 1
+          example: my-bos-session-template
+          description: |
+            The name of the Boot Orchestration Service (BOS) session template to use
+            for the upgrades.
+        upgrading_label:
+          type: string
+          minLength: 1
+          example: nodes-currently-upgrading
+          description: |
+            An empty Hardware State Manager (HSM) group which CRUS will use to boot
+            and configure the discrete sets of nodes.
+        workload_manager_type:
+          type: string
+          example: slurm
+          enum: [slurm]
+          description: The name of the workload manager. Currently only slurm is supported.
+      required:
+        - failed_label
+        - starting_label
+        - upgrade_step_size
+        - upgrade_template_id
+        - upgrading_label
+        - workload_manager_type
+      additionalProperties: false
+    SessionStatus:
+      type: object
+      description: The status for a CRUS Session.
+      properties:
+        api_version:
+          type: string
+          pattern: '^(0|[1-9][0-9]*)([.](0|[1-9][0-9]*)){2}$'
+          example: 2.71.828
+          description: Version of the API that created the session.
+        completed:
+          type: boolean
+          example: true
+          description: Whether or not the CRUS session has completed.
+        failed_label:
+          type: string
+          minLength: 1
+          example: nodes-that-failed
+          description: |
+            A Hardware State Manager (HSM) group which CRUS will populate
+            with any nodes that fail their upgrades.
+        kind:
+          type: string
+          enum: [ComputeUpgradeSession]
+          example: ComputeUpgradeSession
+          description: The kind of CRUS session. Currently only ComputeUpgradeSession.
+        messages:
+          type: array
+          items:
+            type: string
+          minItems: 0
+          description: Status messages describing the progress of the session.
+        starting_label:
+          type: string
+          minLength: 1
+          example: nodes-to-upgrade
+          description: |
+            A Hardware State Manager (HSM) group which contains the total set of
+            nodes to be upgraded.
+        state:
+          type: string
+          enum:
+            - CREATED
+            - READY
+            - DELETING
+            - UPDATING
+          example: UPDATING
+          description: Current state of the session.
+        upgrade_id:
+          type: string
+          format: uuid
+          minLength: 1
+          example: c926acf6-b5c6-411e-ba6c-ea0448cab2ee
+          description: The ID of the CRUS session.
+        upgrade_step_size:
+          type: integer
+          minimum: 1
+          example: 30
+          description: |
+            The desired number of nodes for each discrete upgrade step. This quantity
+            will not be exceeded but some steps may use fewer nodes.
+        upgrade_template_id:
+          type: string
+          minLength: 1
+          example: my-bos-session-template
+          description: |
+            The name of the Boot Orchestration Service (BOS) session template for the
+            CRUS session upgrades.
+        upgrading_label:
+          type: string
+          minLength: 1
+          example: nodes-currently-upgrading
+          description: |
+            A Hardware State Manager (HSM) group which the CRUS session will use
+            to boot and configure the discrete sets of nodes.
+        workload_manager_type:
+          type: string
+          example: slurm
+          enum: [slurm]
+          description: The name of the workload manager.
+      required:
+        - api_version
+        - completed
+        - failed_label
+        - kind
+        - messages
+        - starting_label
+        - state
+        - upgrade_id
+        - upgrade_step_size
+        - upgrade_template_id
+        - upgrading_label
+        - workload_manager_type
+      additionalProperties: false
+  responses:
+    SessionStatus:
+      description: The status of the CRUS session.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SessionStatus'
+paths:
+  /session:
+    post:
+      summary: Create a session
+      description: |
+        The creation of a session performs a rolling upgrade
+        using the specified session template on the nodes
+        specified in the starting group.
+      requestBody:
+         description: A JSON object for creating a Session
+         required: true
+         content:
+           application/json:
+             schema:
+               $ref: '#/components/schemas/Session'
+      responses:
+        201:
+          $ref: '#/components/responses/SessionStatus'
+        400:
+          description: Bad Request
+        422:
+          description: Unprocessable Entity
+
+    get:
+      summary: List sessions
+      description: |
+        List all sessions, including those in progress and those complete.
+      responses:
+        200:
+          description: A collection of Sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionStatus'
+  /session/{upgrade_id}:
+    get:
+      summary: Retrieve session details by id
+      description: Retrieve session details by upgrade_id.
+      responses:
+        200:
+          $ref: '#/components/responses/SessionStatus'
+        404:
+          description: Not Found
+    delete:
+      summary: Delete session by id
+      description: Delete session by upgrade_id.
+      responses:
+        200:
+          $ref: '#/components/responses/SessionStatus'
+        404:
+          description: Not Found
+    parameters:
+      - name: upgrade_id
+        in: path
+        description: Upgrade ID
+        required: true
+        schema:
+          type: string
+          format: uuid

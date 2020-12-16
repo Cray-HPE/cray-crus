@@ -1,0 +1,175 @@
+# Please refer to https://stash.us.cray.com/projects/CLOUD/repos/cray-charts/browse/stable/cray-service/values.yaml?at=refs%2Fheads%2Fmaster
+# for more info on values you can set/override
+# Note that cray-service.containers[*].image and cray-service.initContainers[*].image map values are one of the only structures that
+# differ from the standard kubernetes container spec:
+# image:
+#   repository: ""
+#   tag: "" (default = "latest")
+#   pullPolicy: "" (default = "IfNotPresent")
+
+cray-service:
+  type: Deployment
+  nameOverride: cray-crus
+  serviceAccountName: "cray-crus-actor"
+  containers:
+    cray-crus:
+      name: cray-crus
+      image:
+        repository: cray/cray-crus
+        pullPolicy: Always
+      env:
+        - name: CRUS_CONFIGURATION
+          value: "prod"
+
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+
+      ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+      livenessProbe:
+        httpGet:
+          port: 8080
+          path: /session
+        initialDelaySeconds: 5
+        periodSeconds: 3
+      readinessProbe:
+        httpGet:
+          port: 8080
+          path: /session
+        initialDelaySeconds: 5
+        periodSeconds: 3
+
+    cray-crua:
+      name: cray-crua
+      image:
+        repository: cray/cray-crus
+        pullPolicy: Always
+      env:
+        - name: CRUS_CONFIGURATION
+          value: "prod"
+        - name: BOOT_SESSION_URI
+          value: "http://cray-bos/v1/session"
+        - name: CRUS_NODE_GROUP_URI
+          value: "http://cray-smd/hsm/v1/groups"
+        - name: CRUS_BSS_HOSTS_URI
+          value: "http://cray-bss/boot/v1/hosts"
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+      command:
+        - "/bin/sh"
+        - "-c"
+        - "/app/entrypoints/controller.sh"
+      livenessProbe:
+        exec:
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "ps -ef | grep controller.sh"
+        initialDelaySeconds: 5
+        periodSeconds: 3
+        failureThreshold: 3
+        successThreshold: 1
+      readinessProbe:
+        exec:
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "ps -ef | grep controller.sh"
+        initialDelaySeconds: 5
+        periodSeconds: 3
+      volumeMounts:
+        - mountPath: /etc/slurm
+          name: slurm-config
+        - mountPath: /var/run/munge
+          name: munge-rundir
+        - name: munge-key
+          mountPath: /munge
+
+    munge:
+      name: munge
+      image:
+        repository: cray/munge-munge
+        tag: IMAGE_MUNGE_MUNGE_TAG
+        pullPolicy: Always
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+      livenessProbe:
+        exec:
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "munge -n | unmunge"
+        initialDelaySeconds: 30
+        periodSeconds: 30
+        failureThreshold: 3
+        successThreshold: 1
+        timeoutSeconds: 5
+      readinessProbe:
+        exec:
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "mount | grep ' /munge ' && mount | grep '/run/munge '"
+        initialDelaySeconds: 5
+        periodSeconds: 3
+      volumeMounts:
+        - mountPath: /munge
+          name: munge-key
+        - mountPath: /var/run/munge
+          name: munge-rundir
+
+  volumes:
+    slurm-config:
+      name: slurm-config
+      configMap:
+        defaultMode: 420
+        name: slurm-map
+
+    munge-key:
+      name: munge-key
+      secret:
+        defaultMode: 420
+        secretName: munge-secret
+
+    munge-rundir:
+      name: munge-rundir
+      emptyDir: {}
+  ingress:
+    enabled: true
+    uri: /
+
+  etcdCluster:
+    enabled: true
+    pvc:
+      storage: 8Gi
+    compactionMode: revision
+    compactionRetention: "100000"
+    snapshotMax: "1"
+    snapshotCount: "5000000"
+    heartbeatInterval: "4200"
+    enforceAntiAffinity: "21000"
+    resources:
+      limits:
+        cpu:     4
+        memory:  8Gi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+
