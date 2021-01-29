@@ -43,7 +43,9 @@ activated:
 $ ETCD_MOCK_CLIENT=yes CRUS_CONFIGURATION=testing python -m crus.wsgi
 ```
 
-# Unit Testing
+# Testing
+
+## Unit Testing
 
 Compute Rolling Upgrade uses nox to test the python code.  This will
 check for lint errors and coding style violations, then run unit tests
@@ -78,7 +80,11 @@ This same testing is done during the Docker build procedure used both
 locally and by Jenkins.  This ensures both lint-free and working code
 at Jenkins build time.
 
-# Deploying to Hardware for Testing
+## CT Tests
+
+See cms-tools repo for details on running CT tests for this service.
+
+## Deploying to Hardware for Testing
 
 CRUS is Helm based and deploys using Loftsman.  To deploy it, follow
 the instructions found in
