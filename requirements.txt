@@ -1,2 +1,4 @@
 -c constraints.txt
 gunicorn
+marshmallow
+flask-marshmallow
