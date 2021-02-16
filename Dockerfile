@@ -1,11 +1,11 @@
 ## Cray Compute Rolling Upgrade Service Dockerfile
-## Copyright 2019-2020 Hewlett Packard Enterprise Development LP
+## Copyright 2019-2021 Hewlett Packard Enterprise Development LP
 
 # Create 'base' image target
 ARG BASE_IMAGE=dtr.dev.cray.com:443/baseos/sles15sp1:sles15sp1
 FROM $BASE_IMAGE as base
-ENV PIP_INDEX_URL=http://dst.us.cray.com/piprepo/simple
-ENV PIP_TRUSTED_HOST=dst.us.cray.com
+ENV PIP_INDEX_URL=https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
+ENV PIP_EXTRA_INDEX_URL=https://arti.dev.cray.com/artifactory/internal-pip-master-local
 ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp1_cn/x86_64/dev/master/
 RUN zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
