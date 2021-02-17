@@ -1,4 +1,4 @@
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
 
 Name: cray-crus-crayctldeploy-test
 License: Cray Software License Agreement
@@ -8,8 +8,8 @@ Version: %(cat .rpm_version_cray-crus-crayctldeploy-test)
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
-Requires: bos-crayctldeploy-test >= 0.1.3
-Requires: cray-cmstools-crayctldeploy-test >= 0.1.1
+Requires: bos-crayctldeploy-test >= 0.2.3
+Requires: cray-cmstools-crayctldeploy-test >= 0.2.8
 Requires: python3-requests
 
 # Test defines. These may make sense to put in a central location
