@@ -102,7 +102,13 @@ get_container_versions_on_branch() {
         proj=${item%%:*}
         team=${item##*:}
 
-        url="http://car.dev.cray.com/artifactory/wlm-slurm/${proj}/noos/noarch/${branch}/${team}/manifest.txt"
+        # Currently WLM images on car.dev use branch name release/shasta-1.4 instead of release/csm-1.0
+        if [ "${branch}" = "release/csm-1.0" ]; then
+            url="http://car.dev.cray.com/artifactory/wlm-slurm/${proj}/noos/noarch/release/shasta-1.4/${team}/manifest.txt"
+        else
+            url="http://car.dev.cray.com/artifactory/wlm-slurm/${proj}/noos/noarch/${branch}/${team}/manifest.txt"
+        fi
+
         if ! wget -nv "${url}"; then
             echo "ERROR: Could not wget ${url}"
             return 1
