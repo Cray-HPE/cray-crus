@@ -11,11 +11,11 @@
 # that are expected to be generated from the manifest.txt files.  If
 # they don't exist, it will cause this script to fail.
 #
-# Lines that start with "teams:" can contain one or more <team> elements
+# Lines that start with "teams:" can contain one or more <repo>:<team> elements
 #
 # Example:
 #   tags: IMAGE_CRAY_BOA_TAG
-#   teams: csm"
+#   teams: SCMS:cms-team"
 
 set -o pipefail
 
@@ -62,8 +62,9 @@ get_teams() {
 
     while read teams; do
         for item in ${teams}; do
-            team=${item}
-            if [ -z "${team}" ]; then
+            proj=${item##*:}
+            team=${item%%:*}
+            if [ -z "${proj}" -o -z "${team}" ]; then
                 echo "Invalid team: ${item}"
                 return 1
             fi
@@ -98,9 +99,10 @@ get_container_versions_on_branch() {
 
     # There can be multiple manifest.txt files that need to be pulled in
     for item in ${TEAM_LIST}; do
-        team=${item}
+        proj=${item%%:*}
+        team=${item##*:}
 
-        url="https://arti.dev.cray.com/artifactory/${team}-misc-${branch}-local/manifest/manifest.txt"
+        url="http://car.dev.cray.com/artifactory/wlm-slurm/${proj}/noos/noarch/${branch}/${team}/manifest.txt"
         if ! wget -nv "${url}"; then
             echo "ERROR: Could not wget ${url}"
             return 1
@@ -132,10 +134,10 @@ get_container_versions_on_branch() {
 get_container_versions() {
     if [[ ${GIT_BRANCH} =~ release\/.* ]]; then
         echo "Release Breanch"
-        get_container_versions_on_branch "stable"
+        get_container_versions_on_branch "${GIT_BRANCH}"
     else
         echo "non-Release Branch"
-        get_container_versions_on_branch "master"
+        get_container_versions_on_branch "dev/master"
     fi
 }
 
