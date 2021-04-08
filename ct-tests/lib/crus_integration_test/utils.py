@@ -1,42 +1,159 @@
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
 
 """
 CRUS integration test helper functions that involve multiple services
 """
 
-from common.bos import describe_bos_session, describe_bos_session_status, list_bos_sessions, \
+from common.bos import create_bos_session_template, \
+                       describe_bos_session, \
+                       describe_bos_session_status, \
+                       describe_bos_session_template, \
+                       list_bos_sessions, \
                        perform_bos_session
+from common.bosutils import clear_bootset_nodes, \
+                            get_boot_verification_command, \
+                            get_retry_string_from_bootset, \
+                            get_unused_retry_values, \
+                            set_new_template_cfs_config, \
+                            SHOW_KERNEL_CMD
+from common.bss import list_bss_bootparameters_nidlist
 from common.capmc import get_capmc_node_status
 from common.crus import describe_crus_session
 from common.hsm import list_hsm_group_members
-from common.helpers import any_dict_value, debug, error, get_bool_field_from_obj, \
-                           get_field_from_obj, get_list_field_from_obj, \
-                           get_str_field_from_obj, info, raise_test_error, sleep
-from common.utils import ssh_command_passes_on_xname, is_xname_pingable
+from common.helpers import any_dict_value, debug, \
+                           debug_logvar, \
+                           error, \
+                           get_bool_field_from_obj, \
+                           get_field_from_obj, \
+                           get_list_field_from_obj, \
+                           get_str_field_from_obj, \
+                           info, raise_test_error, sleep
+from common.utils import ssh_command_passes_on_xname, \
+                         is_xname_pingable
+import copy
+import datetime
+import random
 import time
+
+def logvar(func, varname, varvalue):
+    debug_logvar(caller="crus_integration_test.utils.%s" % func, varname=varname, varvalue=varvalue)
+
+def create_bos_session_templates(use_api, template_objects, test_variables, num_to_create, xname_to_nid):
+    """
+    Create the specified number of new bos session templates, which are clones of "base_template_name"
+    with the following changes:
+    1) The kernel parameters are changed to have a different rd.retry value
+    2) The template name is based on that value
+    3) A new VCS branch is created with an ansible playbook that appends a line to /etc/motd with the new template name
+    4) A new CFS configuration is created which uses this playbook
+    5) The node_list, node_groups, or node_roles_groups fields in the bootset are replaced.
+        - The first template will have it replaced with node_list of all our xnames.
+        - The rest will have node_groups set to our upgrading group
+    The test_template_names list is populated with the new template names.
+    The test_vcs_branches list is populated with the new vcs branch names.
+    The template_objects map is updated to include the new templates.
+    """
+
+    def _logvar(varname, varvalue):
+        logvar(func="create_bos_session_templates", varname=varname, varvalue=varvalue)
+
+    base_template_name = test_variables["template"]
+    test_template_names = test_variables["test_template_names"]
+    test_hsm_groups = test_variables["test_hsm_groups"]
+    
+    xnames = xname_to_nid.keys()
+    base_template_object = template_objects[base_template_name]
+    upgrading_group_name = test_hsm_groups["upgrading"]
+
+    # We have previously verified that base_template_object has just 1 boot set
+    base_bootset = any_dict_value(base_template_object["boot_sets"])
+    base_template_retry_string = get_retry_string_from_bootset(base_bootset)
+    _logvar("base_template_retry_string", base_template_retry_string)
+
+    info("Get list of BSS boot parameters for all enabled compute nodes")
+    bss_boot_parameters = list_bss_bootparameters_nidlist(use_api=use_api, xname_to_nid=xname_to_nid)
+
+    unused_rd_retry_values = get_unused_retry_values(start_value=10, howmany=num_to_create, template_objects=template_objects, 
+                                                     bss_boot_parameters=bss_boot_parameters)
+    _logvar("unused_rd_retry_values", unused_rd_retry_values)
+
+    for i, retry_val in enumerate(unused_rd_retry_values):
+        _logvar("i", i)
+        _logvar("retry_val", retry_val)
+
+        new_test_template_object = copy.deepcopy(base_template_object)
+        new_test_template_object['description'] = "Template for CRUS integration test, based on %s template" % base_template_name
+
+        new_tname = "crus-test-r%d-%s" % (retry_val, datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
+        _logvar("new_tname", new_tname)
+        new_test_template_object["name"] = new_tname
+
+        set_new_template_cfs_config(use_api=use_api, new_test_template_object=new_test_template_object, 
+                                    new_tname=new_tname, test_variables=test_variables)
+
+        # We have previously verified that base_template_object has just 1 boot set
+        bootset = any_dict_value(new_test_template_object["boot_sets"])
+
+        # Remove any previous node_list, node_groups, or node_roles_groups fields in this bootset
+        clear_bootset_nodes(bootset)
+
+        if i == 0:
+            bootset_xname_list = list(xnames)
+            random.shuffle(bootset_xname_list)
+            bootset["node_list"] = bootset_xname_list
+        else:
+            bootset["node_groups"] = [ upgrading_group_name ]
+
+        new_retry_string = "rd.retry=%d" % retry_val
+        _logvar("new_retry_string", new_retry_string)
+
+        if base_template_retry_string:
+            bootset["kernel_parameters"] = bootset["kernel_parameters"].replace(base_template_retry_string, new_retry_string)
+        else:
+            bootset["kernel_parameters"] = "%s %s" % (bootset["kernel_parameters"], new_retry_string)
+
+        create_bos_session_template(use_api, new_test_template_object)
+        test_template_names.append(new_tname)
+
+        # retrieve our new template to verify it was created successfully
+        template_objects[new_tname] = describe_bos_session_template(use_api, new_tname)
 
 def verify_node_states(use_api, xname_template_map, template_objects, xname_to_nid):
     """
     Verify that all nodes look like they are booted using the correct BOS session template.
     """
-    def get_kernel_parameters(bst):
+    def kernel_parameters_okay(xn, bst):
         # We know our test templates only have a single bootset
         bst_bootset = any_dict_value(bst["boot_sets"])
-        return bst_bootset["kernel_parameters"]
-
-    show_kernel_cmd = "dmesg | grep 'Kernel command line:'"
-    def kernel_parameters_okay(xn, bst):
-        boot_verification_cmd = "dmesg | grep -q '%s'" % get_kernel_parameters(bst)
+        boot_verification_cmd = get_boot_verification_command(bst_bootset)
         if ssh_command_passes_on_xname(xn, boot_verification_cmd):
             debug("%s appears to be booted using the expected kernel parameters" % xn)
             return True
         error("%s appears to have the wrong kernel parameters" % xn)
-        ssh_command_passes_on_xname(xn, show_kernel_cmd)
+        ssh_command_passes_on_xname(xn, SHOW_KERNEL_CMD)
         return False
 
     show_motd_cmd = "tail -1 /etc/motd"
     def motd_okay(xn, tname):
-        motd_verification_cmd = "tail -1 /etc/motd | grep -q 'branch=%s$'" % tname
+        motd_verification_cmd = "tail -1 /etc/motd | grep -q 'tname=%s$'" % tname
         if ssh_command_passes_on_xname(xn, motd_verification_cmd):
             debug("%s appears to be configured as we expected" % xn)
             return True
