@@ -1,7 +1,7 @@
 # Copyright 2020 Hewlett Packard Enterprise Development LP
 
 Name: cray-crus-crayctldeploy-test
-License: Cray Software License Agreement
+License: MIT
 Summary: Cray post-install tests for Compute Rolling Upgrade Service (CRUS)
 Group: System/Management
 Version: %(cat .rpm_version_cray-crus-crayctldeploy-test)
