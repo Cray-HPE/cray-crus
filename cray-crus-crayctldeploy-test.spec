@@ -1,4 +1,22 @@
 # Copyright 2020-2021 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
 
 Name: cray-crus-crayctldeploy-test
 License: MIT
@@ -8,8 +26,8 @@ Version: %(cat .rpm_version_cray-crus-crayctldeploy-test)
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
-Requires: bos-crayctldeploy-test >= 0.2.3
-Requires: cray-cmstools-crayctldeploy-test >= 0.2.8
+Requires: bos-crayctldeploy-test >= 0.2.8
+Requires: cray-cmstools-crayctldeploy-test >= 0.2.11
 Requires: python3-requests
 
 # Test defines. These may make sense to put in a central location
@@ -18,7 +36,6 @@ Requires: python3-requests
 %define testlib %{tests}/lib
 
 # CMS test defines
-%define smslongcms %{smslong}/cms
 %define cmslib %{testlib}/cms
 %define cmscommon %{cmslib}/common
 
@@ -34,11 +51,6 @@ This is a collection of post-install tests for Compute Rolling Upgrade Service (
 %build
 
 %install
-# Install long run tests
-install -m 755 -d %{buildroot}%{smslongcms}/
-install ct-tests/crus_integration_api_test.sh %{buildroot}%{smslongcms}
-install ct-tests/crus_integration_cli_test.sh %{buildroot}%{smslongcms}
-
 # Install shared test libraries
 # The cmscommon directory should already exist, since we have
 # cray-cmstools-crayctldeploy-test as a prerequisite, but just in
@@ -51,20 +63,16 @@ install -m 755 -d %{buildroot}%{crusinttestlib}/
 install -m 755 ct-tests/lib/crus_integration_test.py %{buildroot}%{cmslib}
 install -m 644 ct-tests/lib/crus_integration_test/__init__.py %{buildroot}%{crusinttestlib}
 install -m 644 ct-tests/lib/crus_integration_test/argparse.py %{buildroot}%{crusinttestlib}
-install -m 644 ct-tests/lib/crus_integration_test/bos.py %{buildroot}%{crusinttestlib}
 install -m 644 ct-tests/lib/crus_integration_test/crus.py %{buildroot}%{crusinttestlib}
 install -m 644 ct-tests/lib/crus_integration_test/hsm.py %{buildroot}%{crusinttestlib}
 install -m 644 ct-tests/lib/crus_integration_test/slurm.py %{buildroot}%{crusinttestlib}
 install -m 644 ct-tests/lib/crus_integration_test/utils.py %{buildroot}%{crusinttestlib}
 
 %clean
-rm -f  %{buildroot}%{smslongcms}/crus_integration_api_test.sh
-rm -f  %{buildroot}%{smslongcms}/crus_integration_cli_test.sh
 rm -f %{buildroot}%{cmscommon}/crus.py
 rm -f %{buildroot}%{cmslib}/crus_integration_test.py
 rm -f %{buildroot}%{crusinttestlib}/__init__.py
 rm -f %{buildroot}%{crusinttestlib}/argparse.py
-rm -f %{buildroot}%{crusinttestlib}/bos.py
 rm -f %{buildroot}%{crusinttestlib}/crus.py
 rm -f %{buildroot}%{crusinttestlib}/hsm.py
 rm -f %{buildroot}%{crusinttestlib}/slurm.py
@@ -74,13 +82,10 @@ rmdir %{buildroot}%{crusinttestlib}
 %files
 %defattr(755, root, root)
 %dir %{crusinttestlib}
-%attr(755, root, root) %{smslongcms}/crus_integration_api_test.sh
-%attr(755, root, root) %{smslongcms}/crus_integration_cli_test.sh
 %attr(644, root, root) %{cmscommon}/crus.py
 %attr(755, root, root) %{cmslib}/crus_integration_test.py
 %attr(644, root, root) %{crusinttestlib}/__init__.py
 %attr(644, root, root) %{crusinttestlib}/argparse.py
-%attr(644, root, root) %{crusinttestlib}/bos.py
 %attr(644, root, root) %{crusinttestlib}/crus.py
 %attr(644, root, root) %{crusinttestlib}/hsm.py
 %attr(644, root, root) %{crusinttestlib}/slurm.py

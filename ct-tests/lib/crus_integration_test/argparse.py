@@ -1,4 +1,22 @@
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
 
 """
 Parses command line arguments for CRUS integration test.
@@ -6,9 +24,8 @@ Parses command line arguments for CRUS integration test.
 Usage: crus_integration_test.py [--nids <A>[-<B>][,<C>[-<D>]]... ] 
                                 [--groups <A>[,<B>...]] 
                                 [--xnames <A>[,<B>...]] 
-                                [--template <bos_session_template_name>] 
                                 [--max-step-size n]
-                                [-v] {api|cli}
+                                [-v] {api|cli} <bos_session_template_name>
 
 The nodes to use will be the union of all nodes specified via --nids and --xnames, plus
 all nodes belonging to any group specified via --groups.
@@ -21,8 +38,6 @@ Examples of legal --nids arguments:
 
 If no nodes are specified (through any combination of --nids, --groups, and --xnames), 
 it will use all compute nodes. At least 3 nodes are required for the test to run.
-
-If no BOS session template is specified, the slurm template will be used.
 """
 
 import argparse
@@ -65,9 +80,6 @@ def parse_args(test_variables):
         metavar="a[,b]...", default=list())
     parser.add_argument("--max-step-size", dest="max_step_size", type=valid_step_size,
         help="Maximum number of nodes per CRUS step", metavar="#", default=None)
-    parser.add_argument("--template", dest="template", type=valid_session_template_name, 
-        help="Name of BOS session template to copy for test (default: slurm)",
-        metavar="bos_session_template_name", default="slurm")
     parser.add_argument("-v", dest="verbose", action="store_const", const=True, 
         help="Enables verbose output (default: disabled)")
     parser.add_argument("--xnames", dest="xnames", type=valid_xname_list, 
@@ -75,6 +87,9 @@ def parse_args(test_variables):
         metavar="{ a[,b]... }", default=list())
     parser.add_argument("api_or_cli", type=valid_api_cli, metavar="{ api | cli }", 
         help="Specify whether the test should use API or CLI calls")
+    parser.add_argument("template", type=valid_session_template_name, 
+        help="Name of BOS session template to copy for test",
+        metavar="bos_session_template_name")
 
     args = parser.parse_args()
     test_variables["use_api"] = (args.api_or_cli == 'api')
