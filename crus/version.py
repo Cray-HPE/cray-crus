@@ -1,4 +1,5 @@
-"""Version Information for Compute Rolling Upgrade
+"""
+Version Information for Compute Rolling Upgrade
 
 Copyright 2019, 2021 Hewlett Packard Enterprise Development LP
 
@@ -19,7 +20,8 @@ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
-
 """
-VERSION = "1.4.14"
-API_VERSION = "1.4.0"
+# The placeholder values below will be replaced at build time by
+# the runBuildPrep.sh script
+VERSION = "@CRUS_VERSION@"
+API_VERSION = "@API_VERSION@"
