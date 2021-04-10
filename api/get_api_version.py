@@ -1,5 +1,5 @@
-#!/bin/bash
-# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
+#!/usr/bin/env python3
+# Copyright 2021 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,6 +19,15 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-./update_versions.sh || exit 1
-./update_tags.sh || exit 1
-exit 0
+# usage: get_api_version.py <path+filename of openapi yaml file>
+
+import sys
+import yaml
+
+# We won't worry about catching any exceptions -- they will just result in
+# the script failing in a pretty obvious way
+if __name__ == "__main__":
+    with open(sys.argv[1], "rt") as f:
+        openapi_yaml = yaml.safe_load(f.read())
+    print(openapi_yaml['info']['version'])
+    sys.exit(0)
