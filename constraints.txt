@@ -9,7 +9,9 @@ chardet==3.0.4
 click==6.7
 colorlog==3.2.0
 coverage==4.5.3
-crus==1.5.12
+# The placeholder version string will be replaced at build time by
+# the runBuildPrep.sh script
+crus==@CRUS_VERSION@
 etcd3==0.10.0
 etcd3-model==1.1.1
 Flask==1.1.1
