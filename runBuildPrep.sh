@@ -20,5 +20,4 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 ./update_versions.sh || exit 1
-./update_tags.sh || exit 1
 exit 0
