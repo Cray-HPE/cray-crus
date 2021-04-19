@@ -276,7 +276,7 @@ def do_test(test_variables):
                use_api=use_api, xname_template_map=xname_template_map, template_objects=template_objects, 
                xname_to_nid=xname_to_nid, target_xnames=list(target_xnames), **crus_session_hsm_groups)
         do_subtest("Delete CRUS session %s" % crus_session_id, delete_crus_session, 
-               use_api=use_api, upgrade_id=crus_session_id)
+               use_api=use_api, upgrade_id=crus_session_id, max_wait_for_completion_seconds=300)
 
     # =============================
     # =============================
