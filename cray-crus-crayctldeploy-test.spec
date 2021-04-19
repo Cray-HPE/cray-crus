@@ -28,8 +28,8 @@ Version: @CRUS_VERSION@
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
-Requires: bos-crayctldeploy-test >= 0.2.8
-Requires: cray-cmstools-crayctldeploy-test >= 0.2.11
+Requires: bos-crayctldeploy-test >= 0.2.9
+Requires: cray-cmstools-crayctldeploy-test >= 1.0.1
 Requires: python3-requests
 
 # Test defines. These may make sense to put in a central location
