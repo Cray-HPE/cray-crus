@@ -1,5 +1,8 @@
+# The placeholder version string will be replaced at build time by
+# the runBuildPrep.sh script
+
 apiVersion: v1
 description: "Kubernetes resources for cray-crus"
 name: "cray-crus"
 home: "scms/cray-crus"
-version: 1.3.9
+version: @CRUS_VERSION@

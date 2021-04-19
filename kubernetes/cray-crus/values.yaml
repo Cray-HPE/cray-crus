@@ -101,7 +101,7 @@ cray-service:
       name: munge
       image:
         repository: cray/munge-munge
-        tag: IMAGE_MUNGE_MUNGE_TAG
+        tag: 0.1.0
         pullPolicy: Always
       resources:
         requests:

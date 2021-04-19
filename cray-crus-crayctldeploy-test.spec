@@ -4,7 +4,9 @@ Name: cray-crus-crayctldeploy-test
 License: MIT
 Summary: Cray post-install tests for Compute Rolling Upgrade Service (CRUS)
 Group: System/Management
-Version: %(cat .rpm_version_cray-crus-crayctldeploy-test)
+# The placeholder version string will be replaced at build time by
+# the runBuildPrep.sh script
+Version: @CRUS_VERSION@
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
