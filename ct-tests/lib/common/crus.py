@@ -22,11 +22,13 @@
 CRUS-related CMS test helper functions
 """
 
-from .api import API_URL_BASE, requests_delete, requests_get, requests_post
+from .api import API_URL_BASE, CMSTestApiUnexpectedStatusCodeError, \
+                 requests_delete, requests_get, requests_post
 from .cli import run_cli_cmd
 from .helpers import debug, error, get_bool_field_from_obj, get_int_field_from_obj, \
                      get_list_field_from_obj, get_str_field_from_obj, info, \
                      raise_test_error, sleep
+import json
 import time
 
 CRUS_URL_BASE = "%s/crus" % API_URL_BASE
@@ -96,7 +98,7 @@ def describe_crus_session(use_api, upgrade_id, expected_values=None):
 
     if expected_values == None:
         expected_values = { "upgrade_id": upgrade_id }
-    else:
+    elif "upgrade_id" not in expected_values:
         expected_values["upgrade_id"] = upgrade_id
     validate_crus_session(response_object, expected_values=expected_values)
     return response_object
@@ -147,23 +149,75 @@ def create_crus_session(use_api, failed_label, starting_label, upgrade_template_
     validate_crus_session(response_object, expected_values=session_values)
     return response_object
 
-def delete_crus_session(use_api, upgrade_id):
+def delete_crus_session(use_api, upgrade_id, max_wait_for_completion_seconds=0):
     """
-    Delete the specified CRUS session
+    Requests that the specified CRUS session be deleted (because of the
+    way CRUS works, this marks it for deletion, but the actual deletion
+    happens some time later)
+    
+    max_wait_for_completion_seconds is the maximum time in seconds that this
+    function should wait to verify that the CRUS session no longer exists.
+    If 0, then no verification is performed.
     """
     info("Deleting CRUS session %s" % upgrade_id)
     if use_api:
         url = crus_session_url(upgrade_id)
         # Currently CRUS delete operations return 200 with an object
         # (unlike most services, which return 204 and blank response)
-        # This is because (I think) CRUS sessions do not get deleted
+        # I think this is because CRUS sessions do not get deleted
         # immediately, but just get marked for deletion.
-        return requests_delete(url, expected_sc=200)
+        resp = requests_delete(url, expected_sc=200)
     else:
         cli_cmd_list = [ "crus", "session", "delete", upgrade_id ]
-        return run_cli_cmd(cli_cmd_list)
+        resp = run_cli_cmd(cli_cmd_list)
+    if max_wait_for_completion_seconds == 0:
+        return resp
+    stop_time = time.time() + max_wait_for_completion_seconds
+    while True:
+        info("Describing CRUS session %s to see if it still exists" % upgrade_id)
+        if use_api:
+            url = crus_session_url(upgrade_id)
+            try:
+                resp = requests_get(url)
+                info("CRUS session %s still exists" % upgrade_id)
+                # Even though we have marked it for deletion, the session in the response
+                # should still be valid
+                validate_crus_session(resp, expected_values={"upgrade_id": upgrade_id})
+            except CMSTestApiUnexpectedStatusCodeError as e:
+                if e.actual_sc == 404:
+                    # Does not exist
+                    break
+                else:
+                    raise_test_error(
+                        "CRUS session %s GET request status code should have been 200 or 404, but was %d" % (
+                            upgrade_id, e.actual_sc))
+        else:
+            cmd_list = ["crus","session","describe",upgrade_id]
+            cli_response = run_cli_cmd(cmd_list, return_rc=True, parse_json_output=False)
+            if cli_response["rc"] == 0:
+                info("CRUS session %s still exists" % upgrade_id)
+                # Even though we have marked it for deletion, the session in the response
+                # should still be valid
+                try:
+                    json_obj = json.loads(cli_response["out"])
+                except Exception as e:
+                    raise_test_exception_error(e, "to decode a JSON object in the CLI output")
+                validate_crus_session(json_obj, expected_values={"upgrade_id": upgrade_id})
+            elif "does not exist" in cli_response["err"]:
+                # Does not exist
+                break
+            else:
+                # The CLI command failed, but it should have said that the resource does not exist
+                raise_test_error("Describing CRUS session %s failed with an unexpected error message" % upgrade_id)
+        # CRUS session still exists
+        timeleft = stop_time-time.time()
+        if timeleft <= 0:
+            # Wait time has elapsed
+            raise_test_error("CRUS session %s still exists %d seconds after being marked for deletion" % upgrade_id)
+        time.sleep(min(5, timeleft))
+    info("CRUS session %s delete completed" % upgrade_id)
 
-def wait_until_crus_session_complete(use_api, upgrade_id, timeout=45*60, sleeptime=30, expected_values=None):
+def wait_until_crus_session_complete(use_api, upgrade_id, timeout=60*60, sleeptime=30, expected_values=None):
     """
     Wait until the specified CRUS session has completed set to True, or until
     we time out. The sleeptime is how long between checks of the CRUS session status.

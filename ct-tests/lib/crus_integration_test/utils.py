@@ -222,7 +222,7 @@ def _get_bos_session_in_progress(bos_session_info):
         raise_test_error("Invalid value for in_progress field: %s (type %s)" % (
                          str(in_progress), str(type(in_progress))))
 
-def monitor_crus_session(use_api, upgrade_id, expected_values, bos_sessions, timeout=45*60, sleeptime=30):
+def monitor_crus_session(use_api, upgrade_id, expected_values, bos_sessions, timeout=60*60, sleeptime=30):
     """
     Wait until the specified CRUS session has completed set to True, or until
     we time out. The sleeptime is how long between checks of the CRUS session status.
