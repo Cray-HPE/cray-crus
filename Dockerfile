@@ -1,5 +1,5 @@
 ## Cray Compute Rolling Upgrade Service Dockerfile
-## Copyright 2019-2021 Hewlett Packard Enterprise Development LP
+# Copyright 2019-2021 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 # Create 'base' image target
-ARG BASE_IMAGE=dtr.dev.cray.com:443/baseos/sles15sp1:sles15sp1
+ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp1:sles15sp1
 FROM $BASE_IMAGE as base
 ENV PIP_INDEX_URL=https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
 ENV PIP_EXTRA_INDEX_URL=https://arti.dev.cray.com/artifactory/internal-pip-master-local
