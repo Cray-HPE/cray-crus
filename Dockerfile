@@ -25,7 +25,9 @@ FROM $BASE_IMAGE as base
 ENV PIP_INDEX_URL=https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
 ENV PIP_EXTRA_INDEX_URL=https://arti.dev.cray.com/artifactory/internal-pip-master-local
 ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
-RUN zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
+# Replace the --gpgcheck-allow-unsigned flag with --no-gpgcheck to work around DST-7878.
+# Ticket CASMCMS-7090 is open to change this back once DST-7878 is resolved.
+RUN zypper ar --no-gpgcheck $SLURM_REPO wlm_slurm && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org && \
     zypper clean -a
