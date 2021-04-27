@@ -24,7 +24,7 @@ ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp2:sles15sp2
 FROM $BASE_IMAGE as base
 ENV PIP_INDEX_URL=https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
 ENV PIP_EXTRA_INDEX_URL=https://arti.dev.cray.com/artifactory/internal-pip-master-local
-ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/dev/master/
+ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
 RUN zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org && \
