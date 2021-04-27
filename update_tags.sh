@@ -15,7 +15,7 @@
 #
 # Example:
 #   tags: IMAGE_CRAY_BOA_TAG
-#   teams: SCMS:cms-team"
+#   teams: csm"
 
 set -o pipefail
 
@@ -61,14 +61,12 @@ get_teams() {
     fi
 
     while read teams; do
-        for item in ${teams}; do
-            proj=${item##*:}
-            team=${item%%:*}
-            if [ -z "${proj}" -o -z "${team}" ]; then
-                echo "Invalid team: ${item}"
+        for team in ${teams}; do
+            if [ -z "${team}" ]; then
+                echo "Invalid team: ${team}"
                 return 1
             fi
-            TEAM_LIST="${TEAM_LIST} ${item}"
+            TEAM_LIST="${TEAM_LIST} ${team}"
         done
     done <<-EOF
 	$(grep '^teams:' update_tags.conf | sed -e 's/^teams://')
@@ -98,17 +96,8 @@ get_container_versions_on_branch() {
     fi
 
     # There can be multiple manifest.txt files that need to be pulled in
-    for item in ${TEAM_LIST}; do
-        proj=${item%%:*}
-        team=${item##*:}
-
-        # Currently WLM images on car.dev use branch name release/shasta-1.4 instead of release/csm-1.0
-        if [ "${branch}" = "release/csm-1.0" ]; then
-            url="http://car.dev.cray.com/artifactory/wlm-slurm/${proj}/noos/noarch/release/shasta-1.4/${team}/manifest.txt"
-        else
-            url="http://car.dev.cray.com/artifactory/wlm-slurm/${proj}/noos/noarch/${branch}/${team}/manifest.txt"
-        fi
-
+    for team in ${TEAM_LIST}; do
+        url="https://arti.dev.cray.com/artifactory/${team}-misc-${branch}-local/manifest/manifest.txt"
         if ! wget -nv "${url}"; then
             echo "ERROR: Could not wget ${url}"
             return 1
@@ -117,6 +106,10 @@ get_container_versions_on_branch() {
         echo "Contents of ${url}"
         echo "===="
         cat manifest.txt
+        if [ $? -ne 0 ]; then
+            echo "ERROR: Unable to cat manifest.txt"
+            return 1
+        fi
         echo "===="
 
         # Generate environment variables. An entry like:
@@ -138,17 +131,17 @@ get_container_versions_on_branch() {
 }
 
 get_container_versions() {
-    if [[ ${GIT_BRANCH} =~ release\/.* ]]; then
-        echo "Release Breanch"
-        get_container_versions_on_branch "${GIT_BRANCH}"
-    else
-        echo "non-Release Branch"
-        get_container_versions_on_branch "dev/master"
+    if [ "${GIT_BRANCH}" = master ]; then
+        echo "master branch"
+        get_container_versions_on_branch "master"
+        return $?
     fi
+    echo "Non-master branch"
+    get_container_versions_on_branch "stable"
+    return $?
 }
 
 pin_dependent_containers() {
-
     get_container_versions || { return 1; }
 
     # Build up the "sed" command

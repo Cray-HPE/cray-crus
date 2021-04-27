@@ -1,5 +1,5 @@
-## Cray Compute Rolling Upgrade Service Dockerfile
-## Copyright 2019-2021 Hewlett Packard Enterprise Development LP
+# Cray Compute Rolling Upgrade Service Dockerfile
+# Copyright 2019-2021 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,12 +20,14 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 # Create 'base' image target
-ARG BASE_IMAGE=dtr.dev.cray.com:443/baseos/sles15sp1:sles15sp1
+ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp2:sles15sp2
 FROM $BASE_IMAGE as base
 ENV PIP_INDEX_URL=https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
 ENV PIP_EXTRA_INDEX_URL=https://arti.dev.cray.com/artifactory/internal-pip-master-local
-ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp1_cn/x86_64/dev/master/
-RUN zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
+ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
+# Replace the --gpgcheck-allow-unsigned flag with --no-gpgcheck to work around DST-7878.
+# Ticket CASMCMS-7090 is open to change this back once DST-7878 is resolved.
+RUN zypper ar --no-gpgcheck $SLURM_REPO wlm_slurm && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org && \
     zypper clean -a
