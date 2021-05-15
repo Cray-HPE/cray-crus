@@ -17,6 +17,8 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+#
+# (MIT License)
 
 Name: cray-crus-crayctldeploy-test
 License: MIT
@@ -24,7 +26,7 @@ Summary: Cray post-install tests for Compute Rolling Upgrade Service (CRUS)
 Group: System/Management
 # The placeholder version string will be replaced at build time by
 # the runBuildPrep.sh script
-Version: @CRUS_VERSION@
+Version: %(cat .version)
 Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
