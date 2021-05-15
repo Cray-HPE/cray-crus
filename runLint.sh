@@ -1,4 +1,6 @@
-# Copyright 2019, 2021 Hewlett Packard Enterprise Development LP
+#!/bin/bash
+
+# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,11 +22,9 @@
 #
 # (MIT License)
 
-"""
-Version Information for Compute Rolling Upgrade
-
-"""
-# The placeholder values below will be replaced at build time by
-# the runBuildPrep.sh script
-VERSION = "@CRUS_VERSION@"
-API_VERSION = "@API_VERSION@"
+./install_cms_meta_tools.sh || exit 1
+RC=0
+./cms_meta_tools/copyright_license_check/copyright_license_check.sh || RC=1
+./cms_meta_tools/go_lint/go_lint.sh || RC=1
+rm -rf ./cms_meta_tools
+exit $RC
