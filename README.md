@@ -121,9 +121,8 @@ changed in the future.
 ## Versioning
 Use [SemVer](http://semver.org/). The main version is located in the [.version](.version) file. The
 API version is in the [api/openapi.yaml](api/openapi.yaml) file.  Other files either
-read the version strings from these files or have this version string written to them at build time using the 
-[update_versions.sh](update_versions.sh) script, based on the information in the 
-[update_versions.conf](update_versions.conf) file.
+read the version strings from these files or have this version string written to them at build time
+based on the information in the [update_versions.conf](update_versions.conf) file.
 
 ## Copyright and License
 This project is copyrighted by Hewlett Packard Enterprise Development LP and is under the MIT
