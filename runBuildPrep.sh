@@ -21,31 +21,6 @@
 #
 # (MIT License)
 
-OPENAPI_FILE="api/openapi.yaml"
-GET_API_VERSION="api/get_api_version.py"
-API_VERSION_TMPFILE=".api_version"
-CONSTRAINTS_TMPFILE="constraints-tmp.txt"
-
 ./update_tags.sh || exit 1
-
-# Need to get the API version from the openapi file
-# Create a constraints file without the crus package in it, since we haven't updated
-# that line yet
-if ! grep -v "^crus==" constraints.txt > ${CONSTRAINTS_TMPFILE} ; then
-    echo "Unable to generate ${CONSTRAINTS_TMPFILE}"
-    exit 1
-fi
-
-pip3 install --no-cache-dir -c ${CONSTRAINTS_TMPFILE} pip setuptools
-pip3 install --no-cache-dir -c ${CONSTRAINTS_TMPFILE} PyYAML
-if ./${GET_API_VERSION} ${OPENAPI_FILE} > ${API_VERSION_TMPFILE} ; then
-    echo "API version string is $(cat ${API_VERSION_TMPFILE})"
-else
-    echo "Unable to get API version from openapi file"
-    exit 1
-fi
-
-./install_cms_meta_tools.sh || exit 1
-./cms_meta_tools/update_versions/update_versions.sh || exit 1
-rm -rf ./cms_meta_tools ${API_VERSION_TMPFILE} ${CONSTRAINTS_TMPFILE}
+./update_versions.sh || exit 1
 exit 0
