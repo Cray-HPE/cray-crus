@@ -26,5 +26,5 @@ Version Information for Compute Rolling Upgrade
 """
 # The placeholder values below will be replaced at build time by
 # the runBuildPrep.sh script
-VERSION = "@CRUS_VERSION@"
-API_VERSION = "@API_VERSION@"
+VERSION = "@VERSION@"
+API_VERSION = "@VERSION@"
