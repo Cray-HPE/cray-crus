@@ -118,6 +118,16 @@ set up the virtual environment for development:
 Currently the openapi.yaml file is kept up to date manually. This is to be
 changed in the future.
 
+## Dependency: munge-munge
+CRUS uses the munge image provided by the wlm-slurm team. 
+We specify which major and minor version of the image we want with the 
+[update_external_versions.conf](update_external_versions.conf) file.
+At build time the [runBuildPrep.sh](runBuildPrep.sh) script finds the
+latest version with that major and minor number.
+
+When creating a new release branch, be sure to update this file to specify the
+desired major and minor number of the image for the new release.
+
 ## Versioning
 Use [SemVer](http://semver.org/). The version is located in the [.version](.version) file.
 Other files either read the version string from this file or have this version string
