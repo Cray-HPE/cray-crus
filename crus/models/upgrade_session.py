@@ -23,7 +23,7 @@
 """Data Model and Schemas for the 'upgrade_session' model of CRUS
 
 """
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, validate
 from etcd3_model import (
     Etcd3Model,
     Etcd3Attr,
@@ -263,38 +263,32 @@ class UpgradeSessionSchema(MA.Schema):
 
     starting_label = fields.Str(description=STARTING_LABEL_DESCRIPTION,
                                 example="slurm-nodes",
-                                validate=(
-                                    lambda l: isinstance(l, str) and l
-                                ),
+                                validate=validate.Length(min=1),
                                 required=True)
 
     upgrading_label = fields.Str(description=UPGRADING_LABEL_DESCRIPTION,
                                  example="upgrading-slurm-nodes",
-                                 validate=(
-                                     lambda l: isinstance(l, str) and l
-                                 ),
+                                 validate=validate.Length(min=1),
                                  required=True)
 
     failed_label = fields.Str(description=FAILED_LABEL_DESCRIPTION,
                               example="failed-slurm-nodes",
-                              validate=(
-                                  lambda l: isinstance(l, str) and l
-                              ),
+                              validate=validate.Length(min=1),
                               required=True)
 
     workload_manager_type = fields.Str(description=WORKLOAD_MGR_TYPE_DESC,
                                        example="slurm",
+                                       validate=validate.OneOf(["slurm"]),
                                        required=True)
 
     upgrade_step_size = fields.Int(description=UPGRADE_STEP_SIZE_DESC,
                                    example=50,
-                                   validate=(
-                                       lambda x: isinstance(x, int) and x > 0
-                                   ),
+                                   validate=validate.Range(min=1),
                                    required=True)
 
     upgrade_template_id = fields.Str(description=UPGRADE_TEMPLATE_ID_DESC,
                                      example=SAMPLE_UPGRADE_TEMPLATE_ID,
+                                     validate=validate.Length(min=1),
                                      required=True)
 
     completed = fields.Bool(description=COMPLETED_DESC,
