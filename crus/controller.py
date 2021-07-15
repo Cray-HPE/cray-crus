@@ -24,6 +24,8 @@
 CRUS service.
 
 """
+import logging
+import os
 import sys
 from getopt import getopt, GetoptError
 from crus import (
@@ -32,6 +34,10 @@ from crus import (
     watch_sessions,
     ComputeUpgradeError
 )
+
+DEFAULT_LOG_LEVEL = "INFO"
+
+LOGGER = logging.getLogger(__name__)
 
 USAGE_STATIC = """
 Usage: driver
@@ -63,6 +69,18 @@ def usage(err=None, retval=1):
     return retval
 
 
+def setup_logging():
+    """If CRUA_LOG_LEVEL environment variable is set, use it to determine the
+    log level. Otherwise use the default.
+    """
+    log_format = "%(asctime)-15s - %(levelname)-7s - %(name)s - %(message)s"
+    # Make it uppercase, just so that people who accidentally set a lowercase
+    # log level are not tripped up
+    requested_log_level = os.environ.get("CRUA_LOG_LEVEL", DEFAULT_LOG_LEVEL).upper()
+    log_level = logging.getLevelName(requested_log_level)
+    logging.basicConfig(level=log_level, format=log_format)
+
+
 def version():
     """Print the version information and return 0
 
@@ -87,28 +105,30 @@ def driver(argv):
     except GetoptError as exc:
         return usage(str(exc))
     for opt in opts:
+        LOGGER.debug("opt = %s", opt)
         if opt[0] == "-h" or opt[0] == "--help":
             return usage(retval=0)
         if opt[0] == "--version":
             return version()
+        LOGGER.error("Unrecognized option: %s", opt)
 
     # There should be no arguments...
     if args != []:
+        LOGGER.error("args = %s", args)
         return usage("Compute Upgrade takes no non-option arguments")
 
     try:  # pragma no unit test (this code never returns, can't test here)
         # Start the controller loop
         watch_sessions()
-    except ComputeUpgradeError as exc:  # pragma no unit test
-        print(
-            "An error occurred while processing upgrades - %s" % str(exc),
-            file=sys.stderr, flush=True
-        )
+    except ComputeUpgradeError:  # pragma no unit test
+        LOGGER.exception("An error occurred while processing upgrades")
         return 1
 
+    LOGGER.error("Should never reach this point in the code")
     # All good, return success.
     return 0  # pragma no unit test (can't really reach this code)
 
 
 if __name__ == '__main__':  # pragma no cover
+    setup_logging()
     sys.exit(driver(sys.argv[1:]))

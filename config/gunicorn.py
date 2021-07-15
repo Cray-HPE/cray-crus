@@ -1,6 +1,4 @@
-#! /bin/sh
-
-# Copyright 2019, 2021 Hewlett Packard Enterprise Development LP
+# Copyright 2021 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -22,5 +20,22 @@
 #
 # (MIT License)
 
-# See config/gunicorn.py for configuration options
-exec gunicorn -c /app/gunicorn.py crus:APP
+# Gunicorn settings for CRUS
+# See https://docs.gunicorn.org/ for more information
+import os
+
+bind = "0.0.0.0:8080"
+# workers = int(os.environ.get('WORKERS', 1))
+workers = 1
+
+# Worker
+# http://docs.gunicorn.org/en/stable/settings.html#worker-class
+# worker_class = os.environ.get('WORKER_CLASS', 'gevent')
+# timeout = int(os.environ.get('WORKER_TIMEOUT', 3600))  # seconds
+
+CRUS_DEFAULT_LOG_LEVEL = "info"
+
+# Logging
+accesslog = "-"  # stdout
+errorlog = "-"   # stderr
+loglevel = os.environ.get("CRUS_LOG_LEVEL", CRUS_DEFAULT_LOG_LEVEL).lower()

@@ -23,13 +23,16 @@
 """Boot Session abstraction for use with the BOS API
 
 """
+import logging
 import time
 from etcd3_model import Etcd3Model, Etcd3Attr
 from ....app import ETCD, APP, HEADERS
 from .wrap_requests import requests
 from .wrap_kubernetes import K8S_BATCH_CLIENT, kubernetes
 from ..errors import ComputeUpgradeError
+from ..requests_logger import do_request
 
+LOGGER = logging.getLogger(__name__)
 BOOT_SESSION_URI = APP.config['BOOT_SESSION_URI']
 HTTPS_VERIFY = APP.config['HTTPS_VERIFY']
 BOA_JOBS_NAMESPACE = APP.config['BOA_JOBS_NAMESPACE']
@@ -42,6 +45,7 @@ def no_upgrade_id():  # pragma should never happen
     """
     reason = "'upgrade_id' must be specified in constructor of "\
         "BootSessionProgress objects"
+    LOGGER.error("no_upgrade_id: This should never happen")
     raise AttributeError(reason)
 
 
@@ -114,6 +118,7 @@ class BootSession:
         among other things.
 
         """
+        self.upgrade_id = upgrade_id
         self.progress = BootSessionProgress.get(upgrade_id)
         if self.progress is None:
             self.progress = BootSessionProgress(upgrade_id=upgrade_id)
@@ -125,22 +130,26 @@ class BootSession:
         with, limiting to nodes in the upgrading HSM group.
 
         """
+        LOGGER.info("BootSession(%s).boot(%s, %s): Starting",
+                    self.upgrade_id, template_id, upgrading_label)
         session_request = {"operation": "reboot",
                            "templateUuid": template_id,
                            "limit": upgrading_label}
-        response = requests.post(BOOT_SESSION_URI,
-                                 headers=HEADERS,
-                                 verify=HTTPS_VERIFY,
-                                 json=session_request)
-
+        response = do_request(requests.post, BOOT_SESSION_URI, headers=HEADERS,
+                              verify=HTTPS_VERIFY, json=session_request)
         if response.status_code != requests.codes['created']:  # pragma no unit test
             # Cannot be reached by unit tests without simulating a
             # network or service failure.
-            raise ComputeUpgradeError(
-                "error getting host data from BOS - %s[%d]" %
-                (response.text, response.status_code)
-            )
-        result_data = response.json()
+            message = "error getting host data from BOS - %s[%d]" % (response.text, response.status_code)
+            LOGGER.error("BootSession(%s).boot(%s, %s): %s", self.upgrade_id, template_id, upgrading_label, message)
+            raise ComputeUpgradeError(message)
+        try:
+            result_data = response.json()
+        except Exception:
+            message = "error getting host data from BOS - error decoding JSON in response"
+            LOGGER.exception("BootSession(%s).boot(%s, %s): %s",
+                             self.upgrade_id, template_id, upgrading_label, message)
+            raise ComputeUpgradeError(message)
         self.progress.session_id = result_data['links'][0]['href']
         self.progress.boot_start_time = time.time()
         self.progress.job_id = result_data['links'][0]['jobId']
@@ -157,39 +166,44 @@ class BootSession:
 
         """
         if not self.progress.session_id:
-            raise ComputeUpgradeError(
-                "Boot session has not been initiated. "
-                "A session.boot() is required before being "
-                "able to check status"
-            )
+            message = "Boot session has not been initiated. " \
+                      "A session.boot() is required before being " \
+                      "able to check status"
+            LOGGER.error("BootSession(%s).booting(): %s", self.upgrade_id, message)
+            raise ComputeUpgradeError(message)
+
         name = self.progress.job_id
         namespace = BOA_JOBS_NAMESPACE
+        LOGGER.debug("BootSession(%s).booting(): Checking status of k8s job %s in namespace %s",
+                     self.upgrade_id, name, namespace)
         try:
             api_response = K8S_BATCH_CLIENT.read_namespaced_job_status(
                 name,
                 namespace
             )
         except kubernetes.client.rest.ApiException as exception:
-            raise ComputeUpgradeError(
-                "failed retrieving job '%s': %s" % (name, exception.reason))
+            message = "failed retrieving job '%s': %s" % (name, exception.reason)
+            LOGGER.exception("BootSession(%s).booting(): %s", self.upgrade_id, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("BootSession(%s).booting(): api_response = %s", self.upgrade_id, str(api_response))
 
-        print("Setting booting to 'True'")
+        LOGGER.debug("BootSession(%s).booting(): Setting booting to 'True'", self.upgrade_id)
         self.progress.booting = True
         status = api_response.status
         if status.conditions:
             condition = status.conditions[-1]
             if condition.type == 'Complete':
                 if condition.status == 'True':
-                    print("Completed, setting booting to 'False'")
+                    LOGGER.debug("BootSession(%s).booting(): Completed, setting booting to 'False'", self.upgrade_id)
                     self.progress.success = (status.succeeded == 1)
                     self.progress.booting = False
             elif condition.type == 'Failed':
                 if condition.status == 'True':
-                    print("Failed, setting booting to 'False'")
+                    LOGGER.debug("BootSession(%s).booting(): Failed, setting booting to 'False'", self.upgrade_id)
                     self.progress.success = False
                     self.progress.booting = False
         self.progress.put()
-        print("booting: returning %s" % str(self.progress.booting))
+        LOGGER.debug("BootSession(%s).booting(): returning %s", self.upgrade_id, self.progress.booting)
         return self.progress.booting
 
     def success(self):
@@ -209,4 +223,6 @@ class BootSession:
         """Remove boot session progress from ETCD.
 
         """
+        LOGGER.debug("BootSession(%s).cleanup(): starting", self.upgrade_id)
         self.progress.remove()
+        LOGGER.debug("BootSession(%s).cleanup(): done", self.upgrade_id)

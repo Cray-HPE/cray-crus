@@ -33,6 +33,7 @@ The definition of the Rolling Compute Upgrade Agent
 # parallel, and, since the code itself is stateless (relying on state
 # stored in ETCD) allows multiple instances of the controller to
 # handle compute upgrades in parallel for scaling.
+import logging
 import time
 from queue import Empty
 from etcd3_model import UPDATING, DELETING
@@ -53,6 +54,8 @@ from ...models.upgrade_session import (
     WLM_WAITING,
     CLEANUP
 )
+
+LOGGER = logging.getLogger(__name__)
 
 # A pause time to avoid swamping the system with monitoring of nodes.
 # If we are running the unit tests, this is 0.01 seconds.  If we are
@@ -152,6 +155,7 @@ def process_upgrade(queue, pending):
         # something could have changed while it was queued.
         upgrade_id = upgrade_session.upgrade_id
         if [event[1] for event in pending if event[1] == upgrade_id]:
+            LOGGER.debug("process_upgrade: Skipping id %s because it is pending", upgrade_id)
             # This one is currently pending.  Probably a case of
             # an update due to an error or something and we don't
             # want to handle it yet.  Skip it.
@@ -159,6 +163,7 @@ def process_upgrade(queue, pending):
         upgrade_session = UpgradeSession.get(upgrade_id)
         if not upgrade_session:  # pragma no unit test
             # Seems to be gone, skip it...
+            LOGGER.debug("process_upgrade: No upgrade session found with id %s", upgrade_id)
             return
 
         if upgrade_session.completed and upgrade_session.state != DELETING:
@@ -166,13 +171,22 @@ def process_upgrade(queue, pending):
             # nothing else to do for update (we want to remove it if
             # it is deleting).  This will happen while we are learning
             # after startup.
+            LOGGER.debug("process_upgrade: Setting id %s session to ready", upgrade_id)
             upgrade_session.set_ready()
+            LOGGER.debug("process_upgrade: id %s session set to ready", upgrade_id)
             return
 
         # Get the progress state for this upgrade session
         upgrade_progress = ComputeUpgradeProgress.get(upgrade_id)
         if upgrade_progress is None:
             upgrade_progress = ComputeUpgradeProgress(upgrade_id=upgrade_id)
+            LOGGER.debug(
+                "process_upgrade: upgrade_progress: id=%s step=%s stage=%s boot_complete_time=%s completed_nodes=%s",
+                upgrade_id,
+                upgrade_progress.step,
+                upgrade_progress.stage,
+                upgrade_progress.boot_complete_time,
+                upgrade_progress.completed_nodes)
             upgrade_progress.put()
 
         step_number = upgrade_progress.step
@@ -184,6 +198,7 @@ def process_upgrade(queue, pending):
             # empty list.
             starting_node_group = NodeGroup(upgrade_session.starting_label)
             upgrade_nodes = starting_node_group.get_members()
+            LOGGER.debug("process_upgrade: id=%s upgrade_nodes=%s", upgrade_id, upgrade_nodes)
             first = step_number * upgrade_session.upgrade_step_size
             last = (step_number + 1) * upgrade_session.upgrade_step_size
             # Unlike regular list references, slices don't have a
@@ -191,6 +206,7 @@ def process_upgrade(queue, pending):
             # [] in that case.  So, we are done when we get an
             # empty list.
             step_nodes = upgrade_nodes[first:last]
+            LOGGER.debug("process_upgrade: id=%s step_nodes=%s", upgrade_id, step_nodes)
 
             # Call the handler function for the current stage
             state = upgrade_session.state
@@ -214,6 +230,7 @@ def process_upgrade(queue, pending):
                 stage,
                 str(err)
             )
+            LOGGER.exception("process_upgrade: id=%s: %s", upgrade_session.upgrade_id, message)
     # Outside the lock, handle any messages and queuing of pending
     # activities.
     #
@@ -232,6 +249,7 @@ def process_upgrade(queue, pending):
     # there is nothing to post to.  Protect that case here.
     if message is not None and not (upgrade_session.state == DELETING and
                                     upgrade_session.completed):
+        LOGGER.info("process_upgrade: id=%s: %s", upgrade_session.upgrade_id, message)
         upgrade_session.post_message_once(message)
         if not error_message:
             # Nothing to schedule, go back for more
@@ -255,10 +273,12 @@ def _fail_nodes(upgrade_session, upgrade_progress, xnames, reason):
     add the nodes to the failed node group.
 
     """
+    LOGGER.debug("_fail_nodes: id=%s reason=%s xnames=%s", upgrade_session.upgrade_id, reason, xnames)
     wlm = get_wlm_handler(upgrade_session.workload_manager_type)
     failed_node_group = NodeGroup(upgrade_session.failed_label)
     xnames = [xname for xname in xnames
               if xname not in upgrade_progress.completed_nodes]
+    LOGGER.debug("_fail_nodes: id=%s updated xnames=%s", upgrade_session.upgrade_id, xnames)
     for xname in xnames:
         wlm.fail(xname, reason)
         failed_node_group.add_member(xname)
@@ -270,6 +290,7 @@ def _fail_nodes_and_step(upgrade_session, upgrade_progress, xnames, reason):
     step.
 
     """
+    LOGGER.debug("_fail_nodes_and_step: id=%s reason=%s xnames=%s", upgrade_session.upgrade_id, reason, xnames)
     # First, fail the nodes as appropriate
     _fail_nodes(upgrade_session, upgrade_progress, xnames, reason)
 
@@ -277,6 +298,7 @@ def _fail_nodes_and_step(upgrade_session, upgrade_progress, xnames, reason):
     # that one...
     upgrade_progress.completed_nodes = []
     upgrade_progress.step += 1
+    LOGGER.info("_fail_nodes_and_step: id=%s Change stage to STARTING", upgrade_session.upgrade_id)
     upgrade_progress.stage = STARTING
     upgrade_progress.put()
 
@@ -286,9 +308,11 @@ def _update_starting(upgrade_session, upgrade_progress, step_nodes):
     quiescing in the WLM (e.g. DRAIN in slurm).
 
     """
+    LOGGER.debug("_update_starting: id=%s step_nodes=%s", upgrade_session.upgrade_id, step_nodes)
     step = upgrade_progress.step
     failed_nodegroup = NodeGroup(upgrade_session.failed_label)
     members = failed_nodegroup.get_members()
+    LOGGER.debug("_update_starting: id=%s step=%d members=%s", upgrade_session.upgrade_id, step, members)
     if step == 0 and members != []:
         # Make sure the Failed node group is empty before we start so
         # we can use the group to indicate recent failures.
@@ -310,6 +334,7 @@ def _update_starting(upgrade_session, upgrade_progress, step_nodes):
     wlm = get_wlm_handler(upgrade_session.workload_manager_type)
     for xname in step_nodes:
         wlm.quiesce(xname)
+    LOGGER.info("_update_starting: id=%s Change stage to QUIESCING", upgrade_session.upgrade_id)
     upgrade_progress.stage = QUIESCING
     upgrade_progress.put()
     # Return a message to post in the upgrade session which will cause
@@ -322,6 +347,8 @@ def _update_quiescing(upgrade_session, upgrade_progress, step_nodes):
     all to reach a quiesced state (e.g. IDLE+DRAIN in slurm).
 
     """
+    LOGGER.debug("_update_quiescing: id=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_progress.step, step_nodes)
     # Wait until we see all of the nodes quiet, then we can advance to
     # BOOTING.  There might be some optimization possible here if we
     # moved nodes on to BOOTING as they quiesce, but this keeps things
@@ -335,6 +362,7 @@ def _update_quiescing(upgrade_session, upgrade_progress, step_nodes):
             return None
     # We got through them all, so they are all quiesced.  Move to
     # QUIESCED.
+    LOGGER.info("_update_quiescing: id=%s Change stage to QUIESCED", upgrade_session.upgrade_id)
     upgrade_progress.stage = QUIESCED
     upgrade_progress.put()
     # Return a message to post with the upgrade session which will
@@ -346,12 +374,16 @@ def _update_quiesced(upgrade_session, upgrade_progress, step_nodes):
     """All nodes are quiesced in the WLM, set up and run the boot session.
 
     """
+    LOGGER.debug("_update_quiesced: id=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_progress.step, step_nodes)
     # Now install the nodes in the upgrading node group...
     step = upgrade_progress.step
     upgrading_node_group = NodeGroup(upgrade_session.upgrading_label)
 
     # First, clear out whatever might have been there before...
     members = upgrading_node_group.get_members()
+    LOGGER.debug("_update_quiesced: id=%s members=%s", upgrade_session.upgrade_id, members)
+
     for xname in members:
         upgrading_node_group.remove_member(xname)
     # Now add the ones we want.
@@ -361,6 +393,7 @@ def _update_quiesced(upgrade_session, upgrade_progress, step_nodes):
     # And initiate a boot session to boot into the upgrade.
     boot_session = BootSession(upgrade_session.upgrade_id)
     boot_session.boot(upgrade_session.upgrade_template_id, upgrade_session.upgrading_label)
+    LOGGER.info("_update_quiesced: id=%s Change stage to BOOTING", upgrade_session.upgrade_id)
     upgrade_progress.stage = BOOTING
     upgrade_progress.put()
     # Return a message to post with the upgrade session which will
@@ -374,6 +407,8 @@ def _update_booting(upgrade_session, upgrade_progress, step_nodes):
     then move on to check success.
 
     """
+    LOGGER.debug("_update_booting: id=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_progress.step, step_nodes)
     step = upgrade_progress.step
     # Check whether the boot session has completed yet.  If not, stay
     # in this state and schedule a retry.
@@ -384,6 +419,7 @@ def _update_booting(upgrade_session, upgrade_progress, step_nodes):
         # Still booting, return None to request a pause and retry.
         return None
     # No longer booting, this means we booted...  Move to BOOTED.
+    LOGGER.info("_update_booting: id=%s Change stage to BOOTED", upgrade_session.upgrade_id)
     upgrade_progress.stage = BOOTED
     upgrade_progress.put()
     # Return a message to be posted to the upgrade session which will
@@ -397,14 +433,18 @@ def _update_booted(upgrade_session, upgrade_progress, step_nodes):
     back in the WLM.
 
     """
+    LOGGER.debug("_update_booted: id=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_progress.step, step_nodes)
     step = upgrade_progress.step
     boot_session = BootSession(upgrade_session.upgrade_id)
     success = boot_session.success()
+    LOGGER.debug("_update_booted: id=%s success=%s", upgrade_session.upgrade_id, success)
     assert success is not None  # programming error if we get None
     if success:
         # All is well, the boot session finished successfully.  This
         # should mean the nodes are coming back to life in the
         # WLM. Move to WLM_WAITING.
+        LOGGER.info("_update_booted: id=%s Change stage to WLM_WAITING", upgrade_session.upgrade_id)
         upgrade_progress.stage = WLM_WAITING
         upgrade_progress.boot_complete_time = time.time()
         upgrade_progress.completed_nodes = []
@@ -432,11 +472,15 @@ def _update_wlm_waiting(upgrade_session, upgrade_progress, step_nodes):
     """Wait for nodes to reach a 'Ready' state of some kind in the WLM.
 
     """
+    LOGGER.debug("_update_wlm_waiting: id=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_progress.step, step_nodes)
     # Check whether we have timed out waiting for the nodes to come
     # back to life under WLM.
     step = upgrade_progress.step
     wlm = get_wlm_handler(upgrade_session.workload_manager_type)
     elapsed = time.time() - upgrade_progress.boot_complete_time
+    LOGGER.debug("_update_wlm_waiting: id=%s elapsed=%s WLM_WAIT_TIMEOUT=%s",
+                 upgrade_session.upgrade_id, elapsed, WLM_WAIT_TIMEOUT)
     if elapsed > WLM_WAIT_TIMEOUT:
         # Ran out of time waiting for the remaining nodes in the
         # waiting nodes list.  Move them to failed, advance the step
@@ -454,6 +498,7 @@ def _update_wlm_waiting(upgrade_session, upgrade_progress, step_nodes):
     # back to normal, then add them to the completed_nodes list.
     check_nodes = [xname for xname in step_nodes
                    if xname not in upgrade_progress.completed_nodes]
+    LOGGER.debug("_update_wlm_waiting: id=%s check_nodes=%s", upgrade_session.upgrade_id, check_nodes)
     if check_nodes:
         for xname in check_nodes:
             if wlm.is_ready(xname):
@@ -474,6 +519,7 @@ def _update_wlm_waiting(upgrade_session, upgrade_progress, step_nodes):
     # to have worked.  Move to the next step.
     upgrade_progress.completed_nodes = []
     upgrade_progress.step += 1
+    LOGGER.info("_update_wlm_waiting: id=%s Change stage to CLEANUP", upgrade_session.upgrade_id)
     upgrade_progress.stage = STARTING
     upgrade_progress.put()
     # Return a message to be posted to the upgrade session which
@@ -489,9 +535,12 @@ def _cleanup(upgrade_session, upgrade_progress, step_nodes):
     upgrading)
 
     """
+    LOGGER.debug("_cleanup: id=%s state=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_session.state, upgrade_progress.step, step_nodes)
     # Done with the upgrade, clean everything up.
     upgrading_node_group = NodeGroup(upgrade_session.upgrading_label)
     members = upgrading_node_group.get_members()
+    LOGGER.debug("_cleanup: id=%s members=%s", upgrade_session.upgrade_id, members)
     for xname in members:
         upgrading_node_group.remove_member(xname)
     boot_session = BootSession(upgrade_session.upgrade_id)
@@ -513,12 +562,19 @@ def _delete_before_finished(upgrade_session, upgrade_progress):
     finishing.
 
     """
+    LOGGER.debug("_delete_before_finished: id=%s state=%s step=%d",
+                 upgrade_session.upgrade_id, upgrade_session.state, upgrade_progress.step)
     step = upgrade_progress.step
     starting_node_group = NodeGroup(upgrade_session.starting_label)
     upgrade_nodes = starting_node_group.get_members()
+    LOGGER.debug("_delete_before_finished: id=%s upgrade_nodes=%s", upgrade_session.upgrade_id, upgrade_nodes)
     first = step * upgrade_session.upgrade_step_size
     last = len(upgrade_nodes)
     nodes = upgrade_nodes[first:last]
+    LOGGER.debug("_delete_before_finished: id=%s step_size=%d first=%d last=%d nodes=%s",
+                 upgrade_session.upgrade_id,
+                 upgrade_session.upgrade_step_size,
+                 first, last, nodes)
     # Move all nodes that haven't already finished upgrading to Failed
     # with a reason indicating that the session was deleted before it
     # completed.
@@ -526,6 +582,7 @@ def _delete_before_finished(upgrade_session, upgrade_progress):
                 "upgrade-session-deleted-before-completion")
 
     upgrade_progress.completed_nodes = []
+    LOGGER.info("_delete_before_finished: id=%s Change stage to CLEANUP", upgrade_session.upgrade_id)
     upgrade_progress.stage = CLEANUP
     upgrade_progress.put()
     return "Upgrade session deleted before completion: moving to cleanup"
@@ -535,9 +592,12 @@ def _delete_before_booting(upgrade_session, upgrade_progress, step_nodes):
     """Handle deleting in anything before entering the booting
 
     """
+    LOGGER.debug("_delete_before_booting: id=%s state=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_session.state, upgrade_progress.step, step_nodes)
     if upgrade_session.completed:
         # This is a completed session, just move it to cleanup for
         # removal.
+        LOGGER.info("_delete_before_booting: id=%s Change stage to CLEANUP", upgrade_session.upgrade_id)
         upgrade_progress.stage = CLEANUP
         upgrade_progress.put()
         return "Deleting after completed: move to CLEANUP for removal"
@@ -548,6 +608,7 @@ def _delete_before_booting(upgrade_session, upgrade_progress, step_nodes):
         # any quiescing nodes and move them to cleanup for removal.
         for xname in step_nodes:
             wlm.resume(xname)
+        LOGGER.info("_delete_before_booting: id=%s Change stage to CLEANUP", upgrade_session.upgrade_id)
         upgrade_progress.stage = CLEANUP
         upgrade_progress.put()
         return "Deleting before any updates: move to CLEANUP for removal"
@@ -565,6 +626,8 @@ def _delete_after_booting(upgrade_session, upgrade_progress, step_nodes):
     booting stage.
 
     """
+    LOGGER.debug("_delete_after_booting: id=%s state=%s step=%d step_nodes=%s",
+                 upgrade_session.upgrade_id, upgrade_session.state, upgrade_progress.step, step_nodes)
     # All nodes are tainted by the upgrade process at this point, so
     # move anything that has not completed to Failed and go to
     # cleanup.

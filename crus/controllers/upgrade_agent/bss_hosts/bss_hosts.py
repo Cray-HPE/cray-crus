@@ -24,10 +24,13 @@
 state and other information about nodes.
 
 """
+import logging
 from ....app import APP, HEADERS
 from ..errors import ComputeUpgradeError
+from ..requests_logger import do_request
 from .wrap_requests import requests
 
+LOGGER = logging.getLogger(__name__)
 BSS_HOSTS_URI = APP.config['BSS_HOSTS_URI']
 HTTPS_VERIFY = APP.config['HTTPS_VERIFY']
 
@@ -48,15 +51,20 @@ class BSSHostTable:
         """ Load the current state of hosts from BSS
 
         """
-        response = requests.get(BSS_HOSTS_URI, headers=HEADERS, verify=HTTPS_VERIFY)
+        response = do_request(requests.get, BSS_HOSTS_URI, headers=HEADERS, verify=HTTPS_VERIFY)
         if response.status_code != requests.codes['ok']:  # pragma no unit test
             # Cannot be reached by unit tests without simulating a
             # network or service failure.
-            raise ComputeUpgradeError(
-                "error getting host data from BSS - %s[%d]" %
+            message = "error getting host data from BSS - %s[%d]" % \
                 (response.text, response.status_code)
-            )
-        result_data = response.json()
+            LOGGER.error("BSSHostTable.refresh(): %s", message)
+            raise ComputeUpgradeError(message)
+        try:
+            result_data = response.json()
+        except Exception:
+            message = "error getting host data from BSS - error decoding JSON in response"
+            LOGGER.exception("BSSHostTable.refresh(): %s", message)
+            raise ComputeUpgradeError(message)
         self.hosts = {host['ID']: host for host in result_data}
 
     def get_all_xnames(self):
