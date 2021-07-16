@@ -11,7 +11,19 @@ workload manager.
 Further documentation of how to use CRUS can be found in the 'docs'
 sub-directory here.
 
-# Building
+## Logging
+
+The gunicorn log level of the CRUS API server is governed by setting the
+CRUS_LOG_LEVEL environment variable in the cray-crus container.
+See [gunicorn documentation](https://docs.gunicorn.org/) for valid values
+(e.g. debug, info, error, etc). Default if unset is info.
+
+The Python logging level of the CRUS upgrade agent is governed by setting the
+CRUA_LOG_LEVEL environment variable in the cray-crua container.
+See Python logging module documentation for supported values (e.g. DEBUG, ERROR,
+INFO, etc). Default if unset is INFO.
+
+## Building
 
 To build a docker image from the Compute Rolling Upgrade Service code:
 
@@ -22,7 +34,7 @@ $ docker build -t cray-crus .
 This will build the code and create a docker image called
 'cray-crus' tagged as latest.
 
-# Running
+## Running
 
 CRUS can be run in 'testing' mode under Docker on any platform:
 
@@ -43,9 +55,9 @@ activated:
 $ ETCD_MOCK_CLIENT=yes CRUS_CONFIGURATION=testing python -m crus.wsgi
 ```
 
-# Testing
+## Testing
 
-## Unit Testing
+### Unit Testing
 
 Compute Rolling Upgrade uses nox to test the python code.  This will
 check for lint errors and coding style violations, then run unit tests
@@ -80,11 +92,11 @@ This same testing is done during the Docker build procedure used both
 locally and by Jenkins.  This ensures both lint-free and working code
 at Jenkins build time.
 
-## CT Tests
+### CT Tests
 
 See cms-tools repo for details on running CT tests for this service.
 
-## Deploying to Hardware for Testing
+### Deploying to Hardware for Testing
 
 CRUS is Helm based and deploys using Loftsman.  To deploy it, follow
 the instructions found in
@@ -94,7 +106,7 @@ attention to the "Getting Set Up" chapter (Chapter 2) and then use the
 instructions in the "Ahoy! Exporting" chapter to get your chart
 deployed on a system.
 
-# Development
+## Development
 
 CRUS is intended to be developed in a Python virtual environment.  To
 set up the virtual environment for development:
@@ -113,12 +125,12 @@ set up the virtual environment for development:
    $ pip install --index-url=http://dst.us.cray.com/piprepo/simple/ --trusted-host dst.us.cray.com .
    ```
 
-## Important Note To Developers
+### Important Note To Developers
 
 Currently the openapi.yaml file is kept up to date manually. This is to be
 changed in the future.
 
-## Dependency: munge-munge
+### Dependency: munge-munge
 CRUS uses the munge image provided by the wlm-slurm team. 
 We specify which major and minor version of the image we want with the 
 [update_external_versions.conf](update_external_versions.conf) file.
@@ -128,15 +140,15 @@ latest version with that major and minor number.
 When creating a new release branch, be sure to update this file to specify the
 desired major and minor number of the image for the new release.
 
-## Versioning
+### Versioning
 Use [SemVer](http://semver.org/). The version is located in the [.version](.version) file.
 Other files either read the version string from this file or have this version string
 written to them at build time based on the information in the [update_versions.conf](update_versions.conf) file.
 
-## Build Helpers
+### Build Helpers
 This repo uses some build helper scripts from the cms-meta-tools repo. See that repo for more details.
 
-## Copyright and License
+### Copyright and License
 This project is copyrighted by Hewlett Packard Enterprise Development LP and is under the MIT
 license. See the [LICENSE](LICENSE) file for details.
 

@@ -23,8 +23,11 @@
 """Base Class for managing WLMs
 
 """
+import logging
 from ..errors import ComputeUpgradeError
 WLM_HANDLERS = {}
+
+LOGGER = logging.getLogger(__name__)
 
 
 class WLMHandler:
@@ -86,4 +89,6 @@ def get_wlm_handler(wlm_type):
     try:
         return WLM_HANDLERS[wlm_type]
     except KeyError:  # pragma should never happen
-        raise ComputeUpgradeError("unknown WLM type '%s'" % wlm_type)
+        message = "unknown WLM type '%s'" % wlm_type
+        LOGGER.error("get_wlm_handler: %s", message)
+        raise ComputeUpgradeError(message)

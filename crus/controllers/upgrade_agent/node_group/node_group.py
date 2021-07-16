@@ -23,10 +23,13 @@
 """Class for managing Node Groups
 
 """
+import logging
 from ....app import APP, HEADERS
 from .wrap_requests import requests
 from ..errors import ComputeUpgradeError
+from ..requests_logger import do_request
 
+LOGGER = logging.getLogger(__name__)
 BASE_URI = APP.config['NODE_GROUP_URI']
 NODE_GROUPS_URI = BASE_URI
 NODE_GROUP_URI = "%s/%%s" % BASE_URI
@@ -53,23 +56,29 @@ class NodeGroup:
             # Make sure the name matches (and is present) in the
             # params
             params['label'] = label
-            response = requests.post(create_uri, json=params, headers=HEADERS,
-                                     verify=HTTPS_VERIFY, timeout=120.0)
+            response = do_request(requests.post, create_uri, json=params, headers=HEADERS,
+                                  verify=HTTPS_VERIFY, timeout=120.0)
             if response.status_code != requests.codes['created']:
-                response_data = response.json()
-                raise ComputeUpgradeError(
-                    "failed to create Node Group named '%s' - %s[%d]" %
-                    (label, response.text, response.status_code))
+                message = "failed to create Node Group named '%s' - %s[%d]" % (
+                    label, response.text, response.status_code)
+                LOGGER.error("NodeGroup.__init__(%s, %s): %s", label, params, message)
+                raise ComputeUpgradeError(message)
         else:
             get_uri = NODE_GROUP_URI % label
-            response = requests.get(get_uri, headers=HEADERS,
-                                    verify=HTTPS_VERIFY, timeout=120.0)
-            response_data = response.json()
+            response = do_request(requests.get, get_uri, headers=HEADERS, verify=HTTPS_VERIFY, timeout=120.0)
             if response.status_code != requests.codes['ok']:
-                raise ComputeUpgradeError(
-                    "failed to obtain Node Group named '%s' - %s[%d]" %
-                    (label, response.text, response.status_code))
-            params = response_data
+                message = "failed to obtain Node Group named '%s' - %s[%d]" % \
+                    (label, response.text, response.status_code)
+                LOGGER.error("NodeGroup.__init__(%s, %s): %s", label, params, message)
+                raise ComputeUpgradeError(message)
+            try:
+                params = response.json()
+            except Exception:
+                LOGGER.exception("NodeGroup.__init__(%s, %s): Unable to decode response as JSON", label, params)
+                message = "failed to obtain Node Group named '%s' - %s[%d]" % (
+                    label, response.text, response.status_code)
+                LOGGER.error("NodeGroup.__init__(%s, %s): %s", label, params, message)
+                raise ComputeUpgradeError(message)
 
         # Remember the settings for the boot set, whether we created
         # it or retrieved it.
@@ -99,26 +108,27 @@ class NodeGroup:
             'id': xname
         }
         add_member_path = NODE_GROUP_MEMBERS_URI % self.label
-        response = requests.post(add_member_path, json=member_data,
-                                 headers=HEADERS, verify=HTTPS_VERIFY,
-                                 timeout=120.0)
+        response = do_request(requests.post, add_member_path, json=member_data, headers=HEADERS,
+                              verify=HTTPS_VERIFY, timeout=120.0)
         if response.status_code != requests.codes['created']:
-            raise ComputeUpgradeError(  # pragma should never happen
-                "failed to add member %s to Node Group named '%s' - %s[%d]" %
-                (xname, self.label, response.text, response.status_code))
+            message = "failed to add member %s to Node Group named '%s' - %s[%d]" % (
+                xname, self.label, response.text, response.status_code)
+            LOGGER.error("NodeGroup(%s).add_member(%s): %s", self.label, xname, message)
+            raise ComputeUpgradeError(message)  # pragma should never happen
+        LOGGER.debug("NodeGroup(%s).add_member(%s): Member added to node group in HSM", self.label, xname)
 
     def remove_member(self, xname):
         """Remove a member from the Node Group
 
         """
         delete_member_path = NODE_GROUP_MEMBER_URI % (self.label, xname)
-        response = requests.delete(delete_member_path, headers=HEADERS,
-                                   verify=HTTPS_VERIFY, timeout=120.0)
+        response = do_request(requests.delete, delete_member_path, headers=HEADERS, verify=HTTPS_VERIFY, timeout=120.0)
         if response.status_code != requests.codes['ok']:
-            raise ComputeUpgradeError(
-                "failed to remove member %s from Node Group named '%s' "
-                "- %s[%d]" %
-                (xname, self.label, response.text, response.status_code))
+            message = "failed to remove member %s from Node Group named '%s' - %s[%d]" % (
+                xname, self.label, response.text, response.status_code)
+            LOGGER.error("NodeGroup(%s).remove_member(%s): %s", self.label, xname, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("NodeGroup(%s).remove_member(%s): Member removed from node group in HSM", self.label, xname)
 
     def get_params(self):
         """Retrieve the Node Group parameters.
@@ -138,9 +148,10 @@ class NodeGroup:
 
         """
         delete_uri = NODE_GROUP_URI % self.label
-        response = requests.delete(delete_uri, headers=HEADERS,
-                                   verify=HTTPS_VERIFY, timeout=120.0)
+        response = do_request(requests.delete, delete_uri, headers=HEADERS, verify=HTTPS_VERIFY, timeout=120.0)
         if response.status_code != requests.codes['ok']:
-            raise ComputeUpgradeError(
-                "failed to delete node group named '%s' - %s[%d]" %
-                (self.label, response.text, response.status_code))
+            message = "failed to delete node group named '%s' - %s[%d]" % \
+                (self.label, response.text, response.status_code)
+            LOGGER.error("NodeGroup(%s).delete(): %s", self.label, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("NodeGroup(%s).delete(): Node group deleted in HSM", self.label)
