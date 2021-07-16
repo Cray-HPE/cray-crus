@@ -24,36 +24,46 @@
 
 """
 
+import logging
 from ..node_table import NodeTable
 from ..errors import ComputeUpgradeError
 from .wrap_shell import shell
 from .wlm import WLMHandler, wlm_handler
 from .slurm_support import parse_show_node
 
+LOGGER = logging.getLogger(__name__)
+
 
 class SlurmHandler(WLMHandler):
-    """Static class that implements a WLM API on th the Slurm WLM.
+    """Static class that implements a WLM API on the Slurm WLM.
 
     """
+
     @staticmethod
     def quiesce(xname):
-        """Initiate quiescing the node indicated by 'xname' for slurm this is
+        """Initiate quiescing the node indicated by 'xname'; for slurm this is
         done by 'draining' the node.
 
         """
         nidname = NodeTable.get_nidname(xname)
-        drain = shell.shell(["scontrol", "update", "NodeName=%s" % nidname,
-                             "State=DRAIN", "Reason=rolling-upgrade"])
+        command = ["scontrol", "update", "NodeName=%s" % nidname,
+                   "State=DRAIN", "Reason=rolling-upgrade"]
+        LOGGER.debug("SlurmHandler.quiesce(%s): nidname=%s, command=%s", xname, nidname, command)
+        drain = shell.shell(command)
         # Comprehension used here to avoid passing the list
         # reference
         #
         # pylint: disable=unnecessary-comprehension
         errors = [error for error in drain.errors()]
         if errors != []:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "failed to quiesce slurm node '%s' - %s" %
-                (nidname, str(errors))
-            )
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.quiesce(%s): nidname=%s, lines=\n%s", xname, nidname,
+                        '\n'.join([line for line in drain.output()]))
+            message = "failed to quiesce slurm node '%s' - %s" % (nidname, str(errors))
+            LOGGER.error("SlurmHandler.quiesce(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("SlurmHandler.quiesce(%s): nidname=%s, lines=\n%s", xname, nidname,
+                     '\n'.join([line for line in drain.output()]))
 
     @staticmethod
     def is_ready(xname):
@@ -63,7 +73,9 @@ class SlurmHandler(WLMHandler):
 
         """
         nidname = NodeTable.get_nidname(xname)
-        show = shell.shell(["scontrol", "show", "node", nidname])
+        command = ["scontrol", "show", "node", nidname]
+        LOGGER.debug("SlurmHandler.is_ready(%s): nidname=%s, command=%s", xname, nidname, command)
+        show = shell.shell(command)
         # Comprehension used here to avoid passing the list
         # references
         #
@@ -72,18 +84,25 @@ class SlurmHandler(WLMHandler):
         # pylint: disable=unnecessary-comprehension
         errors = [error for error in show.errors()]
         if errors != []:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "failed to check slurm node '%s' for idle - %s" %
-                (nidname, str(errors)))
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.is_ready(%s): nidname=%s, lines=\n%s", xname, nidname, '\n'.join(lines))
+            message = "failed to check slurm node '%s' for idle - %s" % (nidname, str(errors))
+            LOGGER.error("SlurmHandler.is_ready(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
         nvps = parse_show_node(lines)
         if 'State' not in nvps:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "'State' not found in scontrol output for "
-                "slurm node '%s' - %s" % nidname
-            )
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.is_ready(%s): nidname=%s, lines=\n%s", xname, nidname, '\n'.join(lines))
+            LOGGER.info("SlurmHandler.is_ready(%s): nidname=%s, nvps=%s", xname, nidname, nvps)
+            message = "'State' not found in scontrol output for slurm node '%s' - %s" % nidname
+            LOGGER.error("SlurmHandler.is_ready(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("SlurmHandler.is_ready(%s): nidname=%s, lines=\n%s", xname, nidname, '\n'.join(lines))
+        LOGGER.debug("SlurmHandler.is_ready(%s): nidname=%s, nvps=%s", xname, nidname, nvps)
         # In slurm, a '*' in the State field indicates that the node
         # is compromised in some way and not ready to be in service.
         state = nvps['State']
+        LOGGER.debug("SlurmHandler.is_ready(%s): nidname=%s, state=%s", xname, nidname, state)
         return "IDLE" in state and '*' not in state
 
     @staticmethod
@@ -93,7 +112,9 @@ class SlurmHandler(WLMHandler):
 
         """
         nidname = NodeTable.get_nidname(xname)
-        show = shell.shell(["scontrol", "show", "node", nidname])
+        command = ["scontrol", "show", "node", nidname]
+        LOGGER.debug("SlurmHandler.is_quiet(%s): nidname=%s, command=%s", xname, nidname, command)
+        show = shell.shell(command)
         # Comprehension used here to avoid passing the list
         # references
         #
@@ -102,16 +123,23 @@ class SlurmHandler(WLMHandler):
         # pylint: disable=unnecessary-comprehension
         errors = [error for error in show.errors()]
         if errors != []:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "failed to check slurm node '%s' for idle - %s" %
-                (nidname, str(errors)))
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.is_quiet(%s): nidname=%s, lines=\n%s", xname, nidname, '\n'.join(lines))
+            message = "failed to check slurm node '%s' for idle - %s" % (nidname, str(errors))
+            LOGGER.error("SlurmHandler.is_quiet(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
         nvps = parse_show_node(lines)
         if 'State' not in nvps:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "'State' not found in scontrol output for "
-                "slurm node '%s' - %s" % nidname
-            )
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.is_quiet(%s): nidname=%s, lines=\n%s", xname, nidname, '\n'.join(lines))
+            LOGGER.info("SlurmHandler.is_quiet(%s): nidname=%s, nvps=%s", xname, nidname, nvps)
+            message = "'State' not found in scontrol output for slurm node '%s' - %s" % nidname
+            LOGGER.error("SlurmHandler.is_quiet(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("SlurmHandler.is_quiet(%s): nidname=%s, lines=\n%s", xname, nidname, '\n'.join(lines))
+        LOGGER.debug("SlurmHandler.is_quiet(%s): nidname=%s, nvps=%s", xname, nidname, nvps)
         state = nvps['State']
+        LOGGER.debug("SlurmHandler.is_quiet(%s): nidname=%s, state=%s", xname, nidname, state)
         return (
             ("IDLE" in state or "DOWN" in state) and
             ("DRAIN" in state)
@@ -123,18 +151,23 @@ class SlurmHandler(WLMHandler):
 
         """
         nidname = NodeTable.get_nidname(xname)
-        resume = shell.shell(["scontrol", "update", "NodeName=%s" % nidname,
-                              "State=RESUME"])
+        command = ["scontrol", "update", "NodeName=%s" % nidname, "State=RESUME"]
+        LOGGER.debug("SlurmHandler.resume(%s): nidname=%s, command=%s", xname, nidname, command)
+        resume = shell.shell(command)
         # Comprehension used here to avoid passing the list
         # reference
         #
         # pylint: disable=unnecessary-comprehension
         errors = [error for error in resume.errors()]
         if errors != []:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "failed to resume slurm node '%s' - %s" %
-                (nidname, str(errors))
-            )
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.resume(%s): nidname=%s, lines=\n%s", xname, nidname,
+                        '\n'.join([line for line in resume.output()]))
+            message = "failed to resume slurm node '%s' - %s" % (nidname, str(errors))
+            LOGGER.error("SlurmHandler.resume(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("SlurmHandler.resume(%s): nidname=%s, lines=\n%s", xname, nidname,
+                     '\n'.join([line for line in resume.output()]))
 
     @staticmethod
     def fail(xname, reason):
@@ -143,18 +176,23 @@ class SlurmHandler(WLMHandler):
 
         """
         nidname = NodeTable.get_nidname(xname)
-        fail = shell.shell(["scontrol", "update", "NodeName=%s" % nidname,
-                            "State=FAIL", "Reason=%s" % reason])
+        command = ["scontrol", "update", "NodeName=%s" % nidname, "State=FAIL", "Reason=%s" % reason]
+        LOGGER.debug("SlurmHandler.fail(%s): nidname=%s, command=%s", xname, nidname, command)
+        fail = shell.shell(command)
         # Comprehension used here to avoid passing the list
         # reference
         #
         # pylint: disable=unnecessary-comprehension
         errors = [error for error in fail.errors()]
         if errors != []:  # pragma should never happen
-            raise ComputeUpgradeError(
-                "failed to put slurm node '%s' in failed state - %s" %
-                (nidname, str(errors))
-            )
+            # Since we are in an error path, we log more than normal at the info log level
+            LOGGER.info("SlurmHandler.fail(%s): nidname=%s, lines=\n%s", xname, nidname,
+                        '\n'.join([line for line in fail.output()]))
+            message = "failed to put slurm node '%s' in failed state - %s" % (nidname, str(errors))
+            LOGGER.error("SlurmHandler.fail(%s): %s", xname, message)
+            raise ComputeUpgradeError(message)
+        LOGGER.debug("SlurmHandler.fail(%s): nidname=%s, lines=\n%s", xname, nidname,
+                     '\n'.join([line for line in fail.output()]))
 
 
 # Register the Slurm handler with WLM

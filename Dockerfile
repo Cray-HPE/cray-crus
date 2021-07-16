@@ -66,4 +66,5 @@ RUN cd /app/crus && NOX_DOCKER_BUILD=yes nox
 #
 #     /app/entrypoints/controller.sh
 FROM base as app
+COPY config/gunicorn.py /app/
 ENTRYPOINT ["/app/entrypoints/api_server.sh"]
