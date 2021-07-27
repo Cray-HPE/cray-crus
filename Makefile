@@ -22,9 +22,9 @@
 
 NAME ?= cray-crus
 CHART_PATH ?= kubernetes
-VERSION := @DOCKER_VERSION@
-SPEC_VERSION := @RPM_VERSION@
-CHART_VERSION := @CHART_VERSION@
+DOCKER_VERSION ?= $(shell head -1 .docker_version)
+RPM_VERSION ?= $(shell head -1 .version)
+CHART_VERSION ?= $(shell head -1 .chart_version)
 
 HELM_UNITTEST_IMAGE ?= quintush/helm-unittest:3.3.0-0.2.5
 
@@ -32,13 +32,16 @@ SPEC_NAME ?= cray-crus-crayctldeploy-test
 RPM_NAME ?= $(SPEC_NAME)
 SPEC_FILE ?= ${SPEC_NAME}.spec
 BUILD_METADATA ?= "1~development~$(shell git rev-parse --short HEAD)"
-SOURCE_NAME ?= ${RPM_NAME}-${SPEC_VERSION}
+SOURCE_NAME ?= ${RPM_NAME}-${RPM_VERSION}
 BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
 
-all: lint rpm_prepare image chart rpm
+all: runbuildprep lint rpm_prepare image chart rpm
 chart: chart_setup chart_package chart_test
 rpm: rpm_package_source rpm_build_source rpm_build
+
+runbuildprep:
+		./runBuildPrep.sh
 
 lint:
 		./runLint.sh
@@ -58,15 +61,15 @@ rpm_build:
 	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --nodeps --define "_topdir $(BUILD_DIR)"
 
 image:
-		docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
+		docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${DOCKER_VERSION}' .
 
 chart_setup:
 		mkdir -p ${CHART_PATH}/.packaged
-		printf "\nglobal:\n  appVersion: ${VERSION}" >> ${CHART_PATH}/${NAME}/values.yaml
+		printf "\nglobal:\n  appVersion: ${DOCKER_VERSION}" >> ${CHART_PATH}/${NAME}/values.yaml
 
 chart_package:
 		helm dep up ${CHART_PATH}/${NAME}
-		helm package ${CHART_PATH}/${NAME} -d ${CHART_PATH}/.packaged --app-version ${VERSION} --version ${CHART_VERSION}
+		helm package ${CHART_PATH}/${NAME} -d ${CHART_PATH}/.packaged --app-version ${DOCKER_VERSION} --version ${CHART_VERSION}
 
 chart_test:
 		helm lint "${CHART_PATH}/${NAME}"
