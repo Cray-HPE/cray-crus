@@ -20,6 +20,9 @@
 #
 # (MIT License)
 
+# If you wish to perform a local build, you will need to clone or copy the contents of the
+# cms-meta-tools repo to ./cms_meta_tools
+
 NAME ?= cray-crus
 CHART_PATH ?= kubernetes
 DOCKER_VERSION ?= $(shell head -1 .docker_version)
@@ -41,10 +44,10 @@ chart: chart_setup chart_package chart_test
 rpm: rpm_package_source rpm_build_source rpm_build
 
 runbuildprep:
-		./runBuildPrep.sh
+		./cms_meta_tools/scripts/runBuildPrep.sh
 
 lint:
-		./runLint.sh
+		./cms_meta_tools/scripts/runLint.sh
 
 rpm_prepare:
 	rm -rf $(BUILD_DIR)
@@ -52,7 +55,7 @@ rpm_prepare:
 	cp $(SPEC_FILE) $(BUILD_DIR)/SPECS/
 
 rpm_package_source:
-	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
+	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude ./cms_meta_tools --exclude ./dist -cvjf $(SOURCE_PATH) .
 
 rpm_build_source:
 	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(SOURCE_PATH) --nodeps --define "_topdir $(BUILD_DIR)"
