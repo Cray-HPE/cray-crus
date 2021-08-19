@@ -31,9 +31,13 @@ RUN zypper --non-interactive install --recommends bash curl rpm && \
     curl -XGET "https://arti.dev.cray.com:443/artifactory/dst-misc-stable-local/SigningKeys/HPE-SHASTA-RPM-PROD.asc" --output HPE-SHASTA-RPM-PROD.asc && \
     rpm --import HPE-SHASTA-RPM-PROD.asc && \
     zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
+    zypper refresh && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
-    pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org && \
-    zypper clean -a
+    pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org
+
+# Apply security patches
+RUN zypper patch -y --with-update --with-optional
+RUN zypper clean -a
 
 WORKDIR /app
 RUN mkdir -p /app/crus
