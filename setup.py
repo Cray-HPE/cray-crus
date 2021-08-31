@@ -29,21 +29,5 @@ setup(
     name='crus',
     version=VERSION,
     packages=find_packages(exclude=['tests']),
-    include_package_data=True,
-    install_requires=[
-        "marshmallow",
-        "shell",
-        "apispec >= 0.39.0, < 1",
-        "Flask",
-        "Flask-RESTful",
-        "flask-restful-swagger-2",
-        "flask-swagger-ui",
-        "flask-marshmallow",
-        "etcd3",
-        "httpproblem",
-        "PyYAML",
-        "urllib3",
-        "etcd3_model",
-        "kubernetes"
-    ]
+    include_package_data=True
 )
