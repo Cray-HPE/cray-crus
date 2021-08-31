@@ -24,8 +24,6 @@
 # Create 'base' image target
 ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp2:sles15sp2
 FROM $BASE_IMAGE as base
-ENV PIP_INDEX_URL=https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
-ENV PIP_EXTRA_INDEX_URL=https://arti.dev.cray.com/artifactory/internal-pip-master-local
 ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
 RUN zypper --non-interactive install --recommends bash curl rpm && \
     curl -XGET "https://arti.dev.cray.com:443/artifactory/dst-misc-stable-local/SigningKeys/HPE-SHASTA-RPM-PROD.asc" --output HPE-SHASTA-RPM-PROD.asc && \
@@ -33,7 +31,7 @@ RUN zypper --non-interactive install --recommends bash curl rpm && \
     zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper refresh && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
-    pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org
+    pip3 install --no-cache-dir -U pip
 
 # Apply security patches
 RUN zypper patch -y --with-update --with-optional
@@ -43,7 +41,7 @@ WORKDIR /app
 RUN mkdir -p /app/crus
 COPY setup.py requirements.txt constraints.txt /app/crus/
 COPY crus /app/crus/crus
-RUN cd /app/crus && pip3 install -c constraints.txt . && pip3 install -r requirements.txt && pip3 list --format freeze
+RUN cd /app/crus && pip3 install -r requirements.txt . && pip3 list --format freeze
 COPY entrypoints /app/entrypoints
 
 # Run unit tests
