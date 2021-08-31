@@ -22,7 +22,7 @@
 # (MIT License)
 
 # Create 'base' image target
-ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp2:sles15sp2
+ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp3:sles15sp3
 FROM $BASE_IMAGE as base
 ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
 RUN zypper --non-interactive install --recommends bash curl rpm && \
