@@ -110,7 +110,7 @@ set up the virtual environment for development:
 3. Install the CRUS in your workspace virtual
    environment, which will pull in all dependencies.
    ```
-   $ pip install --index-url=http://dst.us.cray.com/piprepo/simple/ --trusted-host dst.us.cray.com .
+   $ pip install --index-url=http://artifactory.algol60.net/artifactory/csm-python-modules/simple/ --trusted-host artifactory.algol60.net .
    ```
 
 ## Important Note To Developers
