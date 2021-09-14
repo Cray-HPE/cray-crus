@@ -80,11 +80,11 @@ def tests(session):
     # Install all test dependencies, then install this package in-place.
     path = 'tests'
     if session.python:
-        session.install('--index-url=http://dst.us.cray.com/piprepo/simple/',
-                        '--trusted-host=dst.us.cray.com',
+        session.install('--index-url=http://artifactory.algol60.net/artifactory/csm-python-modules/simple/',
+                        '--trusted-host=artifactory.algol60.net',
                         '-r', 'requirements-test.txt')
-        session.install('--index-url=http://dst.us.cray.com/piprepo/simple/',
-                        '--trusted-host=dst.us.cray.com',
+        session.install('--index-url=http://artifactory.algol60.net/artifactory/csm-python-modules/simple/',
+                        '--trusted-host=artifactory.algol60.net',
                         '-e', '.')
 
     # Run py.test against the tests.
@@ -114,8 +114,8 @@ def cover(session):
     test runs, and then erases coverage data.
     """
     if session.python:
-        session.install('--index-url=http://dst.us.cray.com/piprepo/simple/',
-                        '--trusted-host=dst.us.cray.com',
+        session.install('--index-url=http://artifactory.algol60.net/artifactory/csm-python-modules/simple/',
+                        '--trusted-host=artifactory.algol60.net',
                         'coverage', 'pytest-cov')
     session.run('coverage', 'report', '--show-missing',
                 '--fail-under={}'.format(COVERAGE_FAIL))
