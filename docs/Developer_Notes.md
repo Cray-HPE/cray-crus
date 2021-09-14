@@ -65,7 +65,7 @@ The `UpgradeSession` class defines the data in terms of an
 `Etcd3Model`, which is a base class provided by the Cray developed
 etcd3_model Python library.  For more information on `Etcd3Model`
 objects and how to define and use them, see the `etd3_model` library
-[README](https://stash.us.cray.com/projects/CLOUD/repos/etcd3_model/browse/README.md)
+[README](https://github.com/Cray-HPE/etcd3_model/README.md)
 file.  The `UpgradeSessionSchema` class defines a Marshmallow (Python
 Library) Schema object which wraps around `UpgradeSession` objects and
 helps to serialize and deserialize them.  This Marshmallow Schema also
@@ -493,7 +493,7 @@ CRUS.  ETCD mocking is enabled by passing in the correct environment
 variable settings to turn on ETCD mocking at run time.
 
 See
-[the etcd3_model Stash repo](https://stash.us.cray.com/projects/CLOUD/repos/etcd3_model/browse)
+[the etcd3_model Stash repo](https://github.com/Cray-HPE/etcd3_model)
 for more details.
 
 ## Use of nox and pytest For Testing / Linting / Style
