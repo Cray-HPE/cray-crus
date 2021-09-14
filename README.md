@@ -100,7 +100,7 @@ See cms-tools repo for details on running CT tests for this service.
 
 CRUS is Helm based and deploys using Loftsman.  To deploy it, follow
 the instructions found in
-[The Ahoy! README](https://stash.us.cray.com/projects/CLOUD/repos/loftsman-ahoy/browse/README.md)
+[The Ahoy! README](https://github.com/Cray-HPE/ahoy/blob/master/README.md)
 and the Ahoy! manual that is linked from there. Make sure you pay
 attention to the "Getting Set Up" chapter (Chapter 2) and then use the
 instructions in the "Ahoy! Exporting" chapter to get your chart
@@ -122,7 +122,7 @@ set up the virtual environment for development:
 3. Install the CRUS in your workspace virtual
    environment, which will pull in all dependencies.
    ```
-   $ pip install --index-url=http://dst.us.cray.com/piprepo/simple/ --trusted-host dst.us.cray.com .
+   $ pip install --index-url=http://artifactory.algol60.net/artifactory/csm-python-modules/simple/ --trusted-host artifactory.algol60.net .
    ```
 
 ### Important Note To Developers
