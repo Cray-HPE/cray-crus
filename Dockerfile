@@ -34,8 +34,8 @@ RUN zypper --non-interactive install --recommends bash curl rpm && \
     pip3 install --no-cache-dir -U pip
 
 # Apply security patches
-RUN zypper patch -y --with-update --with-optional
-RUN zypper clean -a
+COPY cms_meta_tools/utils/zypper-patch.sh /
+RUN /zypper-patch.sh && rm /zypper-patch.sh
 
 WORKDIR /app
 RUN mkdir -p /app/crus
