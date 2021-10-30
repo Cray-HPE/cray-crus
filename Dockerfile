@@ -25,17 +25,17 @@
 ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp2:sles15sp2
 FROM $BASE_IMAGE as base
 ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
-RUN zypper --non-interactive install --recommends bash curl rpm && \
+RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
+    zypper --non-interactive refresh && \
+    zypper --non-interactive install --recommends bash curl rpm && \
     curl -XGET "https://arti.dev.cray.com:443/artifactory/dst-misc-stable-local/SigningKeys/HPE-SHASTA-RPM-PROD.asc" --output HPE-SHASTA-RPM-PROD.asc && \
     rpm --import HPE-SHASTA-RPM-PROD.asc && \
-    zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
-    zypper refresh && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip3 install --no-cache-dir -U pip
 
 # Apply security patches
-RUN zypper patch -y --with-update --with-optional
-RUN zypper clean -a
+COPY zypper-refresh-patch-clean.sh /
+RUN /zypper-refresh-patch-clean.sh && rm /zypper-refresh-patch-clean.sh
 
 WORKDIR /app
 RUN mkdir -p /app/crus
