@@ -73,7 +73,18 @@ RUN cd /app/crus && NOX_DOCKER_BUILD=yes nox
 #
 #     /app/entrypoints/controller.sh
 FROM base as app
-RUN groupadd -g 65534 nobody && useradd -u 65534 -g nobody nobody && chown -R nobody:nobody /app
+
+# Add 'nobody' group with specified group ID, if it does not already exist
+RUN grep -E "^nobody:[^:]*:65534:" /etc/group || groupadd -g 65534 nobody
+
+# Add 'nobody' user with specified user ID and group, if it does not already exist
+RUN grep -E "^nobody:[^:]*:65534:" /etc/passwd|| useradd -u 65534 -g nobody nobody
+
+# In case the 'nobody' user already existed, make sure it belongs to 'nobody' group
+RUN usermod -g nobody nobody
+
+RUN chown -R nobody:nobody /app
+
 USER 65534:65534
 COPY config/gunicorn.py /app/
 ENTRYPOINT ["/app/entrypoints/api_server.sh"]
