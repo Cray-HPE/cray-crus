@@ -33,6 +33,11 @@ RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm 
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip3 install --no-cache-dir -U pip
 
+# The current sles15sp3 base image starts with a lock on coreutils, but this prevents a necessary
+# security patch from being applied. Thus, adding this command to remove the lock if it is 
+# present.
+RUN zypper --non-interactive removelock coreutils || true
+
 # Apply security patches
 COPY zypper-refresh-patch-clean.sh /
 RUN /zypper-refresh-patch-clean.sh && rm /zypper-refresh-patch-clean.sh
