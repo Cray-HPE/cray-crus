@@ -25,17 +25,22 @@
 ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp3:sles15sp3
 FROM $BASE_IMAGE as base
 ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
-RUN zypper --non-interactive install --recommends bash curl rpm && \
+RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
+    zypper --non-interactive refresh && \
+    zypper --non-interactive install --recommends bash curl rpm && \
     curl -XGET "https://arti.dev.cray.com:443/artifactory/dst-misc-stable-local/SigningKeys/HPE-SHASTA-RPM-PROD.asc" --output HPE-SHASTA-RPM-PROD.asc && \
     rpm --import HPE-SHASTA-RPM-PROD.asc && \
-    zypper ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
-    zypper refresh && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip3 install --no-cache-dir -U pip
 
+# The current sles15sp3 base image starts with a lock on coreutils, but this prevents a necessary
+# security patch from being applied. Thus, adding this command to remove the lock if it is 
+# present.
+RUN zypper --non-interactive removelock coreutils || true
+
 # Apply security patches
-RUN zypper patch -y --with-update --with-optional
-RUN zypper clean -a
+COPY zypper-refresh-patch-clean.sh /
+RUN /zypper-refresh-patch-clean.sh && rm /zypper-refresh-patch-clean.sh
 
 WORKDIR /app
 RUN mkdir -p /app/crus
@@ -68,7 +73,18 @@ RUN cd /app/crus && NOX_DOCKER_BUILD=yes nox
 #
 #     /app/entrypoints/controller.sh
 FROM base as app
-RUN groupadd -g 65534 nobody && useradd -u 65534 -g nobody nobody && chown -R nobody:nobody /app
+
+# Add 'nobody' group with specified group ID, if it does not already exist
+RUN grep -E "^nobody:[^:]*:65534:" /etc/group || groupadd -g 65534 nobody
+
+# Add 'nobody' user with specified user ID and group, if it does not already exist
+RUN grep -E "^nobody:[^:]*:65534:" /etc/passwd|| useradd -u 65534 -g nobody nobody
+
+# In case the 'nobody' user already existed, make sure it belongs to 'nobody' group
+RUN usermod -g nobody nobody
+
+RUN chown -R nobody:nobody /app
+
 USER 65534:65534
 COPY config/gunicorn.py /app/
 ENTRYPOINT ["/app/entrypoints/api_server.sh"]
