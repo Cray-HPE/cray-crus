@@ -6,7 +6,10 @@
 #   repository: ""
 #   tag: "" (default = "latest")
 #   pullPolicy: "" (default = "IfNotPresent")
-
+#
+# The placeholder 0.0.0-* version string(s) will be replaced at build time by
+# the runBuildPrep.sh script in the cms-meta-tools repo
+#
 cray-service:
   type: Deployment
   nameOverride: cray-crus
@@ -15,8 +18,9 @@ cray-service:
     cray-crus:
       name: cray-crus
       image:
-        repository: cray/cray-crus
-        pullPolicy: Always
+        repository: artifactory.algol60.net/csm-docker/stable/cray-crus
+        tag: 0.0.0-image
+        pullPolicy: IfNotPresent
       env:
         - name: CRUS_CONFIGURATION
           value: "prod"
@@ -49,8 +53,9 @@ cray-service:
     cray-crua:
       name: cray-crua
       image:
-        repository: cray/cray-crus
-        pullPolicy: Always
+        repository: artifactory.algol60.net/csm-docker/stable/cray-crus
+        tag: 0.0.0-image
+        pullPolicy: IfNotPresent
       env:
         - name: CRUS_CONFIGURATION
           value: "prod"
@@ -100,9 +105,9 @@ cray-service:
     munge:
       name: munge
       image:
-        repository: cray/munge-munge
-        tag: IMAGE_MUNGE_MUNGE_TAG
-        pullPolicy: Always
+        repository: arti.dev.cray.com/wlm-slurm-docker-stable-local/munge-munge
+        tag: 0.0.0-munge
+        pullPolicy: IfNotPresent
       resources:
         requests:
           memory: "128Mi"
@@ -167,9 +172,8 @@ cray-service:
     enforceAntiAffinity: "21000"
     resources:
       limits:
-        cpu:     4
-        memory:  8Gi
+        cpu: 4
+        memory: 8Gi
       requests:
         cpu: 10m
         memory: 64Mi
-
