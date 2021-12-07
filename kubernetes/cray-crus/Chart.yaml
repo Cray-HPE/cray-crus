@@ -1,8 +1,29 @@
-# The placeholder version string will be replaced at build time by
-# the runBuildPrep.sh script
-
-apiVersion: v1
-description: "Kubernetes resources for cray-crus"
+# The placeholder 0.0.0-* version string(s) will be replaced at build time by
+# the runBuildPrep.sh script in the cms-meta-tools repo
+#
+apiVersion: v2
 name: "cray-crus"
-home: "scms/cray-crus"
-version: @VERSION@
+version: 0.0.0-chart
+type: application
+description: "Kubernetes resources for cray-crus"
+keywords:
+  - csm
+  - crus
+home: https://github.com/Cray-HPE/cray-crus
+sources:
+  - "https://github.com/Cray-HPE/cray-crus"
+dependencies:
+- name: cray-service
+  version: ^7.0.0
+  repository: https://artifactory.algol60.net/artifactory/csm-helm-charts/
+maintainers:
+  - name: mharding-hpe
+    email: mitchell.harding@hpe.com
+  - name: rkleinman-hpe
+    email: randy.kleinman@hpe.com
+appVersion: 0.0.0-image
+annotations:
+  artifacthub.io/images: |
+    - name: cray-crus
+      image: artifactory.algol60.net/csm-docker/stable/cray-crus:0.0.0-image
+  artifacthub.io/license: MIT
