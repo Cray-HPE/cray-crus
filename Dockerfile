@@ -24,7 +24,7 @@
 # Create 'base' image target
 ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp3:sles15sp3
 FROM $BASE_IMAGE as base
-ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp3_cn/x86_64/release/wlm-slurm-1.1/
+ARG SLURM_REPO=https://arti.dev.cray.com/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp3_cn/
 RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive refresh && \
     zypper --non-interactive install --recommends bash curl rpm && \
