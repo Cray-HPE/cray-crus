@@ -1,5 +1,5 @@
 # Cray Compute Rolling Upgrade Service Dockerfile
-# Copyright 2019-2021 Hewlett Packard Enterprise Development LP
+# Copyright 2019-2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 # Create 'base' image target
 ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp3:sles15sp3
 FROM $BASE_IMAGE as base
-ARG SLURM_REPO=http://car.dev.cray.com/artifactory/wlm-slurm/RM/sle15_sp2_cn/x86_64/release/wlm-slurm-1.0/
+ARG SLURM_REPO=https://arti.dev.cray.com/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp3_cn/
 RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive refresh && \
     zypper --non-interactive install --recommends bash curl rpm && \
