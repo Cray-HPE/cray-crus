@@ -105,8 +105,8 @@ cray-service:
     munge:
       name: munge
       image:
-        repository: arti.dev.cray.com/wlm-slurm-docker-stable-local/munge-munge
-        tag: 0.0.0-munge
+        repository: arti.dev.cray.com/wlm-slurm-docker-master-local/munge-munge
+        tag: 1.1.2-20220210194015_e8cc1ca
         pullPolicy: IfNotPresent
       resources:
         requests:
