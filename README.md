@@ -131,14 +131,13 @@ Currently the openapi.yaml file is kept up to date manually. This is to be
 changed in the future.
 
 ### Dependency: munge-munge
-CRUS uses the munge image provided by the wlm-slurm team. 
-We specify which major and minor version of the image we want with the 
-[update_external_versions.conf](update_external_versions.conf) file.
-At build time the [runBuildPrep.sh](runBuildPrep.sh) script finds the
-latest version with that major and minor number.
+CRUS uses the munge image built by the container-images repo.
+This image is rebuilt periodically to patch security issues, but if
+a new version is required modify the build files in container-images
+and manually update the version used by cray-crus.
 
-When creating a new release branch, be sure to update this file to specify the
-desired major and minor number of the image for the new release.
+This relies on munge secrets put in place by PE so periocially this may need
+to be updated based on system changes.
 
 ## Build Helpers
 This repo uses some build helpers from the 
