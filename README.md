@@ -1,5 +1,8 @@
 # Compute Rolling Upgrade Service (CRUS)
 
+**Note:** CRUS is deprecated in CSM 1.2.0. It will be removed in a future CSM release
+and replaced with BOS V2, which will provide similar functionality.
+
 CRUS is the Shasta service that manages Compute Node Rolling Upgrades.
 It provides a way to upgrade a set of compute nodes in discrete steps
 (i.e. a few nodes at a time) gracefully, coordinating with Workload
