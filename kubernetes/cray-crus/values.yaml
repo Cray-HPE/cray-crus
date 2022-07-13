@@ -157,6 +157,10 @@ cray-service:
             - "mount | grep ' /munge ' && mount | grep '/run/munge '"
         initialDelaySeconds: 5
         periodSeconds: 3
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 481
+        runAsGroup: 481
       volumeMounts:
         - mountPath: /munge
           name: munge-key
