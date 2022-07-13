@@ -32,49 +32,26 @@ CHART_VERSION ?= $(shell head -1 .chart_version)
 
 HELM_UNITTEST_IMAGE ?= quintush/helm-unittest:3.3.0-0.2.5
 
-SPEC_NAME ?= cray-crus-crayctldeploy-test
-RPM_NAME ?= $(SPEC_NAME)
-SPEC_FILE ?= ${SPEC_NAME}.spec
-BUILD_METADATA ?= "1~development~$(shell git rev-parse --short HEAD)"
-SOURCE_NAME ?= ${RPM_NAME}-${RPM_VERSION}
-BUILD_DIR ?= $(PWD)/dist/rpmbuild
-SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
-
-all: runbuildprep lint rpm_prepare image chart rpm
+all: runbuildprep lint image chart
 chart: chart_setup chart_package chart_test
-rpm: rpm_package_source rpm_build_source rpm_build
 
 runbuildprep:
-		./cms_meta_tools/scripts/runBuildPrep.sh
+	./cms_meta_tools/scripts/runBuildPrep.sh
 
 lint:
-		./cms_meta_tools/scripts/runLint.sh
-
-rpm_prepare:
-	rm -rf $(BUILD_DIR)
-	mkdir -p $(BUILD_DIR)/SPECS $(BUILD_DIR)/SOURCES
-	cp $(SPEC_FILE) $(BUILD_DIR)/SPECS/
-
-rpm_package_source:
-	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude ./cms_meta_tools --exclude ./dist -cvjf $(SOURCE_PATH) .
-
-rpm_build_source:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(SOURCE_PATH) --nodeps --define "_topdir $(BUILD_DIR)"
-
-rpm_build:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --nodeps --define "_topdir $(BUILD_DIR)"
+	./cms_meta_tools/scripts/runLint.sh
 
 image:
-		docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${DOCKER_VERSION}' .
+	docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${DOCKER_VERSION}' .
 
 chart_setup:
-		mkdir -p ${CHART_PATH}/.packaged
-		printf "\nglobal:\n  appVersion: ${DOCKER_VERSION}" >> ${CHART_PATH}/${NAME}/values.yaml
+	mkdir -p ${CHART_PATH}/.packaged
+	printf "\nglobal:\n  appVersion: ${DOCKER_VERSION}" >> ${CHART_PATH}/${NAME}/values.yaml
 
 chart_package:
-		helm dep up ${CHART_PATH}/${NAME}
-		helm package ${CHART_PATH}/${NAME} -d ${CHART_PATH}/.packaged --app-version ${DOCKER_VERSION} --version ${CHART_VERSION}
+	helm dep up ${CHART_PATH}/${NAME}
+	helm package ${CHART_PATH}/${NAME} -d ${CHART_PATH}/.packaged --app-version ${DOCKER_VERSION} --version ${CHART_VERSION}
 
 chart_test:
-		helm lint "${CHART_PATH}/${NAME}"
-		docker run --rm -v ${PWD}/${CHART_PATH}:/apps ${HELM_UNITTEST_IMAGE} -3 ${NAME}
+	helm lint "${CHART_PATH}/${NAME}"
+	docker run --rm -v ${PWD}/${CHART_PATH}:/apps ${HELM_UNITTEST_IMAGE} -3 ${NAME}
