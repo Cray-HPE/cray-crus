@@ -112,6 +112,16 @@ and the Ahoy! manual that is linked from there. Pay attention to the
 "Getting Set Up" chapter (Chapter 2) and then use the instructions in the
 "Ahoy! Exporting" chapter to get the chart deployed on a system.
 
+## Contributing
+
+[Code owners](.github/CODEOWNERS): make a branch. Others, make a fork.
+
+This repository follows the [CSM Gitflow Development Process](https://github.com/Cray-HPE/community/wiki/Gitflow-Development-Process).
+
+## Changelog
+
+See the [CHANGELOG](CHANGELOG.md) for changes. This file uses the [Keep A Changelog](https://keepachangelog.com) format.
+
 ## Development
 
 CRUS is intended to be developed in a Python virtual environment. To
@@ -167,9 +177,6 @@ For a local build, it is necessary to manually write the `.version`, `.docker_ve
 `.chart_version` files. When building on GitHub, this is done by the `setVersionFiles()` function.
 
 ### Versioning
-
-The version `cray-crus` is generated dynamically at build time by running the `version.py` script from
-`cms-meta-tools`. The version is included near the very beginning of the GitHub build output.
 
 In order to make it easier to go from an artifact back to the source code that produced that artifact,
 a text file named `gitInfo.txt` is added to Docker images built from this repository. Inside the Docker images,
