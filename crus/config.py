@@ -73,7 +73,7 @@ class DefaultConfig:
     NODE_GROUP_URI = uri_compose("CRUS_NODE_GROUP_URI",
                                  "CRUS_API_URI",
                                  "https://api-gw-service-nmn.local/apis",
-                                 "smd/hsm/v1/groups")
+                                 "smd/hsm/v2/groups")
     MOCK_BOOT = bool_from_env('CRUS_MOCK_BOOT', default='no')
     UPGRADE_DATA_DIR = os.environ.get('UPGRADE_DATA_DIR', "/upgrade_data")
     BOOT_STATUS_DELAY = float(
@@ -117,7 +117,7 @@ class DevelopmentConfig(DefaultConfig):
     NODE_GROUP_URI = uri_compose("CRUS_NODE_GROUP_URI",
                                  "CRUS_API_URI",
                                  "https://api-gw-service-nmn.local/apis",
-                                 "smd/hsm/v1/groups")
+                                 "smd/hsm/v2/groups")
     MOCK_BOOT = bool_from_env('CRUS_MOCK_BOOT', default='no')
     UPGRADE_DATA_DIR = os.environ.get('UPGRADE_DATA_DIR', "/upgrade_data")
     BOOT_STATUS_DELAY = float(
@@ -160,7 +160,7 @@ class TestingConfig(DefaultConfig):
     NODE_GROUP_URI = uri_compose("CRUS_NODE_GROUP_URI",
                                  "CRUS_API_URI",
                                  "https://api-gw-service-nmn.local/apis",
-                                 "smd/hsm/v1/groups")
+                                 "smd/hsm/v2/groups")
     MOCK_BOOT = bool_from_env('CRUS_MOCK_BOOT', default='yes')
     UPGRADE_DATA_DIR = os.environ.get('UPGRADE_DATA_DIR', "/upgrade_data")
     BOOT_STATUS_DELAY = float(
@@ -182,7 +182,7 @@ class TestingConfig(DefaultConfig):
     NODE_GROUP_URI = uri_compose("CRUS_NODE_GROUP_URI",
                                  "CRUS_API_URI",
                                  "https://api-gw-service-nmn.local/apis",
-                                 "smd/hsm/v1/groups")
+                                 "smd/hsm/v2/groups")
     MOCK_BOOT = bool_from_env('CRUS_MOCK_BOOT', default='yes')
     UPGRADE_DATA_DIR = os.environ.get('UPGRADE_DATA_DIR', "/upgrade_data")
     BOOT_STATUS_DELAY = float(
@@ -225,7 +225,7 @@ class ProductionConfig(DefaultConfig):
     NODE_GROUP_URI = uri_compose("CRUS_NODE_GROUP_URI",
                                  "CRUS_API_URI",
                                  "https://api-gw-service-nmn.local/apis",
-                                 "smd/hsm/v1/groups")
+                                 "smd/hsm/v2/groups")
     MOCK_BOOT = bool_from_env('CRUS_MOCK_BOOT', default='no')
     UPGRADE_DATA_DIR = os.environ.get('UPGRADE_DATA_DIR', "/upgrade_data")
     BOOT_STATUS_DELAY = float(

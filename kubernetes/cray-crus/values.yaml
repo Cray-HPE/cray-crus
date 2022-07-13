@@ -85,7 +85,7 @@ cray-service:
         - name: BOOT_SESSION_URI
           value: "http://cray-bos/v1/session"
         - name: CRUS_NODE_GROUP_URI
-          value: "http://cray-smd/hsm/v1/groups"
+          value: "http://cray-smd/hsm/v2/groups"
         - name: CRUS_BSS_HOSTS_URI
           value: "http://cray-bss/boot/v1/hosts"
       resources:
