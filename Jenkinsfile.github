@@ -40,7 +40,6 @@ pipeline {
         NAME = "cray-crus"
         DESCRIPTION = "Compute Rolling Upgrade Service"
         IS_STABLE = getBuildIsStable()
-        BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
     }
 
     stages {
@@ -70,19 +69,6 @@ pipeline {
             }
         }
 
-        stage("Add RPM Metadata") {
-            steps {
-                echo "RPM build metadata is ${env.BUILD_METADATA}"
-                runLibraryScript("addRpmMetaData.sh", "")
-            }
-        }
-
-        stage("Prepare") {
-            steps {
-                sh "make rpm_prepare"
-            }
-        }
-
         stage("Build") {
             parallel {
                 stage('Image') {
@@ -107,12 +93,6 @@ pipeline {
                         sh "make chart"
                     }
                 }
-
-                stage('Rpm') {
-                    steps {
-                        sh "make rpm"
-                    }
-                }
             }
         }
 
@@ -124,8 +104,6 @@ pipeline {
             steps {
                 publishCsmDockerImage(image: env.NAME, tag: env.DOCKER_VERSION, isStable: env.IS_STABLE)
                 publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/kubernetes/.packaged", isStable: env.IS_STABLE)
-                publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
-                publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
             }
         }
     }
