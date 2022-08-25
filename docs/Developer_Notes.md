@@ -5,7 +5,7 @@ It provides a way to upgrade a set of compute nodes in discrete steps
 (i.e. a few nodes at a time) gracefully, coordinating with Workload
 Managers and with the Boot Orchestration Service (BOS) to take nodes
 out of service, boot them and put them back into service while
-minimally impacting the availabilty of nodes to do work under a
+minimally impacting the availability of nodes to do work under a
 workload manager.
 
 Further documentation of how to use CRUS can be found
@@ -174,7 +174,7 @@ they are updated in ETCD.
 Execution and deletion of Upgrade Sessions progresses through a state
 machine that executes the various 'stages' of an upgrade or of cleaning
 up an upgrade.  This state machine has two sequences: the Upgrade
-Sequence and the Delete Sequence.  At any point in the Ugrade
+Sequence and the Delete Sequence.  At any point in the Upgrade
 Sequence, the state machine can detect that an Upgrade Session is in
 the `DELETING` state, and switch to the Delete Sequence.  Once in the
 Delete Sequence, the Upgrade Session can never go back to the Upgrade
@@ -194,7 +194,7 @@ Manager. When all step nodes are quiet, advance to `QUIESCED`.
 4. `BOOTING`: wait for the Boot Session for the step to complete.  When
 it does, advance to `BOOTED`.
 
-5. `BOOTED`: check success or failure of the Boot Session.  On sucess,
+5. `BOOTED`: check success or failure of the Boot Session.  On success,
 advance to `WLM_WAITING`.  On failure, handle the failure, advance to
 the next step (next set of nodes), and return to `STARTING`.
 
@@ -212,7 +212,7 @@ enters the `DELETING` state.
 When an Upgrade Session enters the `DELETING` state (regardless of the
 processing stage it is in) it uses the same stages.  It decides
 whether it is deleting *before* or *after* entering the `BOOTING`
-stage for the current step.  If it is deleting before enterring
+stage for the current step.  If it is deleting before entering
 `BOOTING` and the current step is 0, the Upgrade Session simply
 advances to the `CLEANUP` stage because there is no further processing
 to do on this step or the remaining steps.  If the current step is
@@ -245,7 +245,7 @@ already holding the lock) and goes back to step 1.
 Upgrade Session to ensure it has the latest content.
 
 5. The watcher obtains (or creates if it does not yet exist) the
-`ComputeUpgradeProgress` object associated with the Ugrade Session.
+`ComputeUpgradeProgress` object associated with the Upgrade Session.
 This is an `Etcd3Model` object defined in 'crus/models/upgrade_session'
 which is keyed by the Upgrade Session Upgrade ID and lasts for the
 duration of the Upgrade Session execution.  It contains all state
@@ -342,7 +342,7 @@ The Boot Service Abstraction is found in
 
 The Boot Service Abstraction provides a `BootSession` class that
 communicates with the BOS API to instantiate Boot Sessions.  It also
-provides methods for monitoring the progress and sucess or failure of
+provides methods for monitoring the progress and success or failure of
 active boot sessions using the Kubernetes Job API.  To keep track of
 the session and some state, it uses an `Etcd3Model` derivative
 `BootSessionProgress` object indexed to the Upgrade Session Upgrade ID

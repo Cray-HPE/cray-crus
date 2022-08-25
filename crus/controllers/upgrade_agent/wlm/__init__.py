@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Initialization for the Compute Node Uprade WLM sub-Module
+Initialization for the Compute Node Upgrade WLM sub-Module
 
 """
 from .wlm import get_wlm_handler

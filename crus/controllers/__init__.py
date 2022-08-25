@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Initialization for the Compute Node Uprade module
+Initialization for the Compute Node Upgrade module
 
 """
 from .upgrade_agent.upgrade_agent import watch_sessions

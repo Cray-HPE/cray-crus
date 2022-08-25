@@ -8,7 +8,7 @@ It provides a way to upgrade a set of compute nodes in discrete steps
 (i.e. a few nodes at a time) gracefully. It coordinates with workload
 managers and the Boot Orchestration Service (BOS) to take nodes
 out of service, reboot them, and put them back into service while
-minimally impacting the availabilty of nodes to do work under a
+minimally impacting the availability of nodes to do work under a
 workload manager.
 
 For further information on CRUS, see:
@@ -158,7 +158,7 @@ This image is rebuilt periodically to patch security issues, but if
 a new version is required, modify the build files in `container-images`
 and manually update the version used by `cray-crus`.
 
-CRUS relies on `munge` secrets put in place by PE so periocially this may need
+CRUS relies on `munge` secrets put in place by PE so periodically this may need
 to be updated based on system changes.
 
 ### Build helpers

@@ -160,7 +160,7 @@ def arrived(upgrade, stage, step):
 
 def wait_for_upgrade(upgrade_id, queue, pending, stage=None, step=None):
     """Wait for an upgrade to complete (if stage and step are None) or to
-    reach the requrested stage / step as descsribed in run_upgrade().
+    reach the requested stage / step as described in run_upgrade().
 
 
     If 'stage' is specified, wait only until the specified
@@ -179,7 +179,7 @@ def wait_for_upgrade(upgrade_id, queue, pending, stage=None, step=None):
 
 
 def verify_failed_nodes(upgrade_id, fail_xnames):
-    """Verify that faile nodes are in the right node group after the
+    """Verify that failed nodes are in the right node group after the
     completion of an upgrade.
 
     """
@@ -190,7 +190,7 @@ def verify_failed_nodes(upgrade_id, fail_xnames):
     check_ng = NodeGroup(ng_name)
     members = check_ng.get_members()
     # Check that the length of the node group matches what is expected,
-    # to eliminiate the chance of missing duplicates in either list.
+    # to eliminate the chance of missing duplicates in either list.
     if len(members) != len(xname_list):  # pragma unit test failure
         print("node group members = %s, expected = %s" % (str(members),
                                                           str(xname_list)))
@@ -234,7 +234,7 @@ def delete_upgrade(upgrade_id, queue, pending):
 def run_upgrade(success_nids, fail_nids):
     """Run a test in which some set of nodes are set to succeed the
     upgrade and others are set to fail the upgrade.  The list of
-    (integer) nids in success_nids are expected to succeeed, the list
+    (integer) nids in success_nids are expected to succeed, the list
     of (integer) nids in fail_nids are expected to fail and will be
     set up to fail before the upgrade completes.
 

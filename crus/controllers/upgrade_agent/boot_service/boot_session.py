@@ -82,7 +82,7 @@ class BootSessionProgress(Etcd3Model):
 
         booting
 
-           A threee state boolean indicating whether the session is
+           A three state boolean indicating whether the session is
            currently booting (True), finished booting (False) or never
            started booting (None).
 
