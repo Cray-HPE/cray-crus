@@ -12,5 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Enabled gitflow and gitversion
 - Pulled forward all changes from CRUS 1.9.x
+- Updated internal domains
 
 [1.0.0] - (no date)

@@ -1,8 +1,8 @@
---trusted-host arti.dev.cray.com
+--trusted-host arti.hpc.amslabs.hpecorp.net
 --trusted-host artifactory.algol60.net
---index-url https://arti.dev.cray.com:443/artifactory/api/pypi/pypi-remote/simple
+--index-url https://arti.hpc.amslabs.hpecorp.net:443/artifactory/api/pypi/pypi-remote/simple
 --extra-index-url http://artifactory.algol60.net/artifactory/csm-python-modules/simple
---extra-index-url https://arti.dev.cray.com/artifactory/internal-pip-master-local
+--extra-index-url https://arti.hpc.amslabs.hpecorp.net/artifactory/internal-pip-master-local
 -c constraints.txt
 apispec
 etcd3
