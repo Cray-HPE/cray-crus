@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Nox definitations for tests, docs, and linting
+Nox definitions for tests, docs, and linting
 """
 from __future__ import absolute_import
 import os

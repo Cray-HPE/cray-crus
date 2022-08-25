@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Initialization for the Compute Node Uprade Agent Node Group sub-module
+Initialization for the Compute Node Upgrade Agent Node Group sub-module
 
 """
 from .node_group import NodeGroup

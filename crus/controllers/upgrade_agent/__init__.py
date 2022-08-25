@@ -22,6 +22,6 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Initialization for the Compute Node Uprade Upgrade Agent sub-Module
+Initialization for the Compute Node Upgrade Agent sub-Module
 
 """

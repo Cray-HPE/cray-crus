@@ -29,7 +29,7 @@ import os
 
 
 def uri_compose(full_env, api_env, api_default, gw_path):
-    """Compose a specific URI prefix either using an enironment variable
+    """Compose a specific URI prefix either using an environment variable
     containing the full prefix (full_env), if that environment
     variable is present or using the combination of an API environment
     variable (api_env) and the gateway path (gw_path) if the
