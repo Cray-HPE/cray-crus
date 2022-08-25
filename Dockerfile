@@ -24,13 +24,13 @@
 # Cray Compute Rolling Upgrade Service Dockerfile
 
 # Create 'base' image target
-ARG BASE_IMAGE=arti.dev.cray.com/baseos-docker-master-local/sles15sp3:sles15sp3
+ARG BASE_IMAGE=arti.hpc.amslabs.hpecorp.net/baseos-docker-master-local/sles15sp3:sles15sp3
 FROM $BASE_IMAGE as base
-ARG SLURM_REPO=https://arti.dev.cray.com/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp3_cn/
+ARG SLURM_REPO=https://arti.hpc.amslabs.hpecorp.net/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp3_cn/
 RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive refresh && \
     zypper --non-interactive install --recommends bash curl rpm && \
-    curl -XGET "https://arti.dev.cray.com:443/artifactory/dst-misc-stable-local/SigningKeys/HPE-SHASTA-RPM-PROD.asc" --output HPE-SHASTA-RPM-PROD.asc && \
+    curl -XGET "https://arti.hpc.amslabs.hpecorp.net:443/artifactory/dst-misc-stable-local/SigningKeys/HPE-SHASTA-RPM-PROD.asc" --output HPE-SHASTA-RPM-PROD.asc && \
     rpm --import HPE-SHASTA-RPM-PROD.asc && \
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip3 install --no-cache-dir -U pip
