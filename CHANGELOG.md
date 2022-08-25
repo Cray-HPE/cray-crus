@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Spelling corrections.
 
+## [1.10.1] - 2022-08-25
+### Added
+- Remove cray internal DNS names
+
 ## [1.10.0] - 2022-07-13
 ### Added
 - Enabled gitflow and gitversion
