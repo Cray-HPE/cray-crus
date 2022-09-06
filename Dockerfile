@@ -24,9 +24,9 @@
 # Cray Compute Rolling Upgrade Service Dockerfile
 
 # Create 'base' image target
-ARG BASE_IMAGE=arti.hpc.amslabs.hpecorp.net/baseos-docker-master-local/sles15sp3:sles15sp3
+ARG BASE_IMAGE=arti.hpc.amslabs.hpecorp.net/baseos-docker-master-local/sles15sp4:sles15sp4
 FROM $BASE_IMAGE as base
-ARG SLURM_REPO=https://arti.hpc.amslabs.hpecorp.net/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp3_cn/
+ARG SLURM_REPO=https://arti.hpc.amslabs.hpecorp.net/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp4_cn/
 RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive refresh && \
     zypper --non-interactive install --recommends bash curl rpm && \
@@ -35,7 +35,7 @@ RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm 
     zypper --non-interactive install --recommends python3 python3-devel python3-pip slurm && \
     pip3 install --no-cache-dir -U pip
 
-# The current sles15sp3 base image starts with a lock on coreutils, but this prevents a necessary
+# The current sles15sp4 base image starts with a lock on coreutils, but this prevents a necessary
 # security patch from being applied. Thus, adding this command to remove the lock if it is 
 # present.
 RUN zypper --non-interactive removelock coreutils || true
