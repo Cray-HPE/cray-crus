@@ -42,7 +42,7 @@
     #        executes in the case of unit test failure, so it does not
     #        contribute to coverage when a unit test runs
     #        successfully.  Not reasonable to expect coverage in a
-    #        sucessful test run.
+    #        successful test run.
     exclude_lines =
         pragma no cover
         pragma should never happen

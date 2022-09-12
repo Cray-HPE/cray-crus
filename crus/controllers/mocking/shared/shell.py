@@ -124,7 +124,7 @@ class CommandOutput:
 
 
 class StdioRedirect:
-    """Context manager for handling stdout and stder redirection for
+    """Context manager for handling stdout and stderr redirection for
     commands.  Redirects to the specified 'out' and 'err' objects on
     context entry, restores previous stdout and stderr on context
     exit.

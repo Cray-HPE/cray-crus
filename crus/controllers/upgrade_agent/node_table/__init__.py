@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Initialization for the Compute Node Uprade Agent Node Table sub-module
+Initialization for the Compute Node Upgrade Agent Node Table sub-module
 
 """
 from .node_table import NodeTable

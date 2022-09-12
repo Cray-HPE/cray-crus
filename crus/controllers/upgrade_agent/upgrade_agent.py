@@ -195,7 +195,7 @@ def process_upgrade(queue, pending):
         try:
             # Figure out what nodes (if any) we are working with for
             # this pass.  If we have exhausted the nodes to be
-            # upgraded (i.e. copleted the last step), this will be an
+            # upgraded (i.e. completed the last step), this will be an
             # empty list.
             starting_node_group = NodeGroup(upgrade_session.starting_label)
             upgrade_nodes = starting_node_group.get_members()

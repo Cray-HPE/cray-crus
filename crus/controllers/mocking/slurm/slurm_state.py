@@ -203,7 +203,7 @@ class SlurmNodeTable:
     def get_state(cls, name):
         """Retrieve the state of the named node.  State is a tuple of a state
         an optional sub-state which is None if not present, and a node
-        states suffix which is either '' or '*' deepending on whether
+        states suffix which is either '' or '*' depending on whether
         the node is running or not.
 
         """

@@ -49,7 +49,7 @@ Where:
 
     --help|-h
 
-        Prints this message on stadard error and exits.
+        Prints this message on standard error and exits.
 
     --version
 

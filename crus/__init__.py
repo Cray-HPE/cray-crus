@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Initialization for the Compute Node Uprade Service (CRUS)
+Initialization for the Compute Node Upgrade Service (CRUS)
 
 """
 from .version import VERSION, API_VERSION

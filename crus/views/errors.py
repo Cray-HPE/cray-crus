@@ -45,7 +45,7 @@ class RequestError(Exception):
                  instance_type=None,
                  instance=None,
                  errors=None):
-        """constructor, callled with the appropriate settings from the derived
+        """constructor, called with the appropriate settings from the derived
         class
 
         param: status_code - the numeric status code of the response

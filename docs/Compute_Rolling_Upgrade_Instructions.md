@@ -284,7 +284,7 @@ unless the boot session is interrupted by being deleted:
    to reach a 'ready' state within 10 minutes of entering this stage are
    marked as failed.
 
-7. Cleanup - the upgrade step has finished: clean up reasources to
+7. Cleanup - the upgrade step has finished: clean up resources to
    prepare for the next step.
 
 When a step moves from one stage to the next, CRUS adds a message to the
@@ -459,7 +459,7 @@ Failed nodes result from three causes:
   step that have not reached a 'ready' state in the workload manager to
   be marked as failed.
 
-When a node is marked as failled, two things happen:
+When a node is marked as failed, two things happen:
 
 * The node is added to the Failed Node Group associated with the upgrade
   session, and
