@@ -48,7 +48,7 @@ WORKDIR /app
 RUN mkdir -p /app/crus
 COPY setup.py requirements.txt constraints.txt /app/crus/
 COPY crus /app/crus/crus
-RUN cd /app/crus && pip3 install -r requirements.txt . && pip3 list --format freeze
+RUN --mount=type=secret,id=netrc,target=/root/.netrc cd /app/crus && pip3 install -r requirements.txt . && pip3 list --format freeze
 COPY entrypoints /app/entrypoints
 
 # Run unit tests
