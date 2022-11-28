@@ -40,6 +40,7 @@ pipeline {
         NAME = "cray-crus"
         DESCRIPTION = "Compute Rolling Upgrade Service"
         IS_STABLE = getBuildIsStable()
+	DOCKER_BUILDKIT = "1"
     }
 
     stages {
