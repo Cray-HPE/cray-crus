@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Hewlett Packard Enterprise Development LP
+# Copyright 2019-2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,10 @@ CHART_VERSION ?= $(shell head -1 .chart_version)
 
 HELM_UNITTEST_IMAGE ?= quintush/helm-unittest:3.3.0-0.2.5
 
+ifneq ($(wildcard ${HOME}/.netrc),)
+        DOCKER_ARGS ?= --secret id=netrc,src=${HOME}/.netrc
+endif
+
 SPEC_NAME ?= cray-crus-crayctldeploy-test
 RPM_NAME ?= $(SPEC_NAME)
 SPEC_FILE ?= ${SPEC_NAME}.spec
@@ -40,6 +44,7 @@ BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
 
 all: runbuildprep lint rpm_prepare image chart rpm
+
 chart: chart_setup chart_package chart_test
 rpm: rpm_package_source rpm_build_source rpm_build
 
