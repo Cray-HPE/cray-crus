@@ -26,7 +26,7 @@
 # Create 'base' image target
 ARG BASE_IMAGE=arti.hpc.amslabs.hpecorp.net/baseos-docker-master-local/sles15sp4:sles15sp4
 FROM $BASE_IMAGE as base
-ARG SLURM_REPO=https://arti.hpc.amslabs.hpecorp.net/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.1/sle15_sp4_cn/
+ARG SLURM_REPO=https://arti.hpc.amslabs.hpecorp.net/artifactory/wlm-slurm-rpm-stable-local/release/wlm-slurm-1.2/sle15_sp4_cn/
 RUN zypper --non-interactive ar --gpgcheck-allow-unsigned $SLURM_REPO wlm_slurm && \
     zypper --non-interactive refresh && \
     zypper --non-interactive install --recommends bash curl rpm && \
@@ -48,7 +48,7 @@ WORKDIR /app
 RUN mkdir -p /app/crus
 COPY setup.py requirements.txt constraints.txt /app/crus/
 COPY crus /app/crus/crus
-RUN cd /app/crus && pip3 install -r requirements.txt . && pip3 list --format freeze
+RUN --mount=type=secret,id=netrc,target=/root/.netrc cd /app/crus && pip3 install -r requirements.txt . && pip3 list --format freeze
 COPY entrypoints /app/entrypoints
 
 # Run unit tests
