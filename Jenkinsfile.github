@@ -40,6 +40,7 @@ pipeline {
         NAME = "cray-crus"
         DESCRIPTION = "Compute Rolling Upgrade Service"
         IS_STABLE = getBuildIsStable()
+        DOCKER_BUILDKIT = "1"
     }
 
     stages {
@@ -59,7 +60,9 @@ pipeline {
 
         stage("runBuildPrep") {
             steps {
-                sh "make runbuildprep"
+                 withCredentials([usernamePassword(credentialsId: 'artifactory-algol60-readonly', passwordVariable: 'ARTIFACTORY_PASSWORD', usernameVariable: 'ARTIFACTORY_USERNAME')]) {
+                    sh "make runbuildprep"
+                    }
             }
         }
 
