@@ -186,17 +186,35 @@ cray-service:
   ingress:
     enabled: true
     uri: /
+  etcdWaitContainer: true
 
-  etcdCluster:
+cray-etcd-base:
+  nameOverride: cray-crus
+  etcd:
     enabled: true
-    pvc:
+    fullnameOverride: "cray-crus-bitnami-etcd"
+    persistence:
       storage: 8Gi
-    compactionMode: revision
-    compactionRetention: "100000"
-    snapshotMax: "1"
-    snapshotCount: "5000000"
-    heartbeatInterval: "4200"
-    enforceAntiAffinity: "21000"
+    extraEnvVars:
+      - name: ETCD_HEARTBEAT_INTERVAL
+        value: "4200"
+      - name: ETCD_ELECTION_TIMEOUT
+        value: "21000"
+      - name: ETCD_MAX_SNAPSHOTS
+        value: "1"
+      - name: ETCD_QUOTA_BACKEND_BYTES
+        value: "10737418240"
+      - name: ETCD_SNAPSHOT_COUNT
+        value: "5000000"
+      - name: ETCD_SNAPSHOT_HISTORY_LIMIT
+        value: "24"
+    autoCompactionMode: revision
+    autoCompactionRetention: "100000"
+    extraVolumes:
+    - configMap:
+        defaultMode: 420
+        name: cray-crus-bitnami-etcd-config
+      name: etcd-config
     resources:
       limits:
         cpu: 4
@@ -204,3 +222,5 @@ cray-service:
       requests:
         cpu: 10m
         memory: 64Mi
+    disasterRecovery:
+      enabled: false
