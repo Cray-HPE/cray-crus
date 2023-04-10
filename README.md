@@ -1,7 +1,27 @@
 # Compute Rolling Upgrade Service (CRUS)
 
-**Note:** CRUS is deprecated in CSM 1.2.0. It will be removed in a future CSM release
-and replaced with BOS V2, which will provide similar functionality.
+**Note:** CRUS is deprecated in CSM 1.2.0. It will be removed in CSM 1.5.0.
+Its functionality is replaced with BOS v2.
+
+- [Summary](#summary)
+- [Logging](#logging)
+- [Building](#building)
+- [Running](#running)
+- [Testing](#testing)
+  - [Unit testing](#unit-testing)
+  - [External tests](#external-tests)
+  - [Deploying to hardware for testing](#deploying-to-hardware-for-testing)
+- [Changelog](#changelog)
+- [Development](#development)
+  - [Contributing](#contributing)
+  - [Important note to developers](#important-note-to-developers)
+  - [Dependency: `munge-munge`](#dependency-munge-munge)
+  - [Build helpers](#build-helpers)
+  - [Local builds](#local-builds)
+  - [Versioning](#versioning)
+- [Copyright and license](#copyright-and-license)
+
+## Summary
 
 CRUS is the Shasta service that manages Compute Node Rolling Upgrades.
 It provides a way to upgrade a set of compute nodes in discrete steps
@@ -98,10 +118,10 @@ This same testing is done during the Docker build procedure used both
 locally and when building on GitHub. This ensures both lint-free and working code
 at build time.
 
-### CT tests
+### External tests
 
 See the [`cms-tools` repository](https://github.com/Cray-HPE/cms-tools) for details
-on running CT tests for this service.
+on running additional tests for this service.
 
 ### Deploying to hardware for testing
 
@@ -111,12 +131,6 @@ the instructions found in
 and the Ahoy! manual that is linked from there. Pay attention to the
 "Getting Set Up" chapter (Chapter 2) and then use the instructions in the
 "Ahoy! Exporting" chapter to get the chart deployed on a system.
-
-## Contributing
-
-[Code owners](.github/CODEOWNERS): make a branch. Others, make a fork.
-
-This repository follows the [CSM Gitflow Development Process](https://github.com/Cray-HPE/community/wiki/Gitflow-Development-Process).
 
 ## Changelog
 
@@ -145,6 +159,12 @@ set up the virtual environment for development:
    ```text
    $ pip install --index-url=http://artifactory.algol60.net/artifactory/csm-python-modules/simple/ --trusted-host artifactory.algol60.net .
    ```
+
+### Contributing
+
+[Code owners](.github/CODEOWNERS): make a branch. Others, make a fork.
+
+This repository follows the [CSM Gitflow Development Process](https://github.com/Cray-HPE/community/wiki/Gitflow-Development-Process).
 
 ### Important note to developers
 
@@ -186,13 +206,6 @@ recent commits to that branch.
 For Helm charts, a few annotation metadata fields are appended which contain similar information.
 
 For RPMs, a changelog entry is added with similar information.
-
-### New release branches
-
-When making a new release branch:
-
-- Be sure to set the `.x` and `.y` files to the desired major and minor version number for `cray-crus` for this release. 
-- If an `update_external_versions.conf` file exists in this repo, be sure to update that as well, if needed.
 
 ## Copyright and license
 
