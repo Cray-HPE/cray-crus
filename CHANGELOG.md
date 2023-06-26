@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1] - 2023-6-26
+### Changed
+- Added etcd_disable_prestop value for the etcd chart
+
 ## [1.12.0] - 2023-3-16
 ### Changed
 - Updated chart to use new bitnami etcd base chart
